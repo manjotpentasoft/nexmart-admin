@@ -1,0 +1,86 @@
+import React from "react";
+import AdminSidebar from "./AdminSidebar";
+import Navbar from "./Navbar";
+import { useSidebar } from "../contexts/SidebarContext";
+
+const AdminLayout = ({ children }) => {
+  const { isSidebarOpen } = useSidebar();
+
+  return (
+    <div style={styles.dashboard}>
+      <div
+        style={{
+          ...styles.sidebar,
+          transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
+        }}
+      >
+        <AdminSidebar sidebarOpen={isSidebarOpen} />
+      </div>
+
+      <div style={styles.main(isSidebarOpen)}>
+        <div style={styles.navbar}>
+          <Navbar />
+        </div>
+        <div style={styles.content}>{children}</div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminLayout;
+
+const styles = {
+  dashboard: {
+    display: "flex",
+    width: "100%",
+    minHeight: "100vh",
+  },
+  main: (isSidebarOpen) => ({
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    marginLeft: isSidebarOpen ? "240px" : "0",
+    transition: "margin-left 0.3s ease",
+  }),
+  content: {
+    flex: 1,
+    padding: "20px",
+    marginTop: "56px", 
+    boxSizing: "border-box",
+  },
+  navbar: {
+    width: "100%",
+    background: "linear-gradient(90deg, #27bda0 0%, #4299e1 100%)",
+    color: "#fff",
+    padding: "6px 12px",
+    position: "fixed",
+    top: 0,
+    right: 0,
+    zIndex: 1200,
+    height: "56px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  sidebar: {
+    width: "240px",
+    minHeight: "100vh",
+    background: "linear-gradient(to bottom, #27bda0 0%, #27b397 100%)",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    padding: "24px 0",
+    boxShadow: "2px 0 16px rgba(44, 62, 80, 0.08)",
+    borderBottomRightRadius: "20px",
+    position: "fixed",
+    top: "56px", 
+    left: 0,
+    zIndex: 1100,
+    transition: "transform 0.3s ease, width 0.3s ease",
+    fontSize: "0.95rem",
+    overflowY: "auto",
+    scrollBehavior: "smooth",
+    overflowX: "hidden",
+    scrollbarWidth: "none",
+  },
+};

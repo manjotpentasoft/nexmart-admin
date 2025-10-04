@@ -1,0 +1,214 @@
+/* CustomerDetailsPage.css */
+
+/* Loader */
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #27bda0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 50px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Orders Header */
+.orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.orders-title h1 {
+  margin: 0;
+  font-size: 2rem;
+  background: linear-gradient(90deg, #4299e1 0%, #27bda0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+.orders-title p {
+  margin: 4px 0 0;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.back-btn {
+  background: linear-gradient(135deg, #27bda0 0%, #4299e1 100%);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(39, 189, 160, 0.25);
+  display: block;
+  max-width: fit-content;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(39, 189, 160, 0.35);
+}
+
+/* Customer Details Card */
+.customer-details-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  row-gap: 18px;
+  column-gap: 24px;
+  align-items: center;
+}
+
+.details-label {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.details-value {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Orders Table Section */
+.orders-table-section {
+  margin: 0 auto;
+  max-width: 90%;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(39, 189, 160, 0.07);
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.orders-table-section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  color: #2d3748;
+}
+
+/* Orders Table */
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  min-width: 700px;
+}
+
+.orders-table thead {
+  background: linear-gradient(90deg, #27bda0 0%, #4299e1 100%);
+  color: #fff;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 14px 12px;
+  text-align: left;
+}
+
+.orders-table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background 0.2s;
+}
+
+.orders-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.orders-table td {
+  vertical-align: middle;
+}
+
+/* Status Badge */
+.order-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.order-status-badge.delivered {
+  background: #c6f6d5;
+  color: #2f855a;
+}
+
+.order-status-badge.pending {
+  background: #fefcbf;
+  color: #975a16;
+}
+
+.order-status-badge.canceled {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .customer-details-card {
+    padding: 20px;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+    row-gap: 16px;
+  }
+
+  .orders-table-section {
+    padding: 16px;
+  }
+
+  .orders-table {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .customer-details-card {
+    padding: 14px;
+  }
+
+  .orders-table-section {
+    padding: 12px;
+  }
+
+  .orders-table th,
+  .orders-table td {
+    padding: 10px 8px;
+  }
+
+  .orders-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .orders-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .back-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

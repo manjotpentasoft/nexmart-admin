@@ -1,0 +1,87 @@
+.manage-pages-table-section {
+  margin: 0 auto;
+  max-width: 900px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(39, 189, 160, 0.07);
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.manage-pages-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.05rem;
+}
+
+.manage-pages-table thead {
+  background: linear-gradient(90deg, #27bda0 0%, #4299e1 100%);
+  color: #fff;
+}
+
+.manage-pages-table th,
+.manage-pages-table td {
+  padding: 14px 12px;
+  text-align: left;
+}
+
+.manage-pages-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.actions button {
+  margin-right: 6px;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.actions .edit {
+  background: #4299e1;
+  color: #fff;
+}
+
+.actions .delete {
+  background: #e53e3e;
+  color: #fff;
+}
+
+.modal-content {
+  margin-top: 30px;
+  max-width: 50%;
+  scrollbar-width: none;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 95%;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin: 0 10px 14px 0;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus {
+  border-color: #27bda0;
+  box-shadow: 0 0 0 3px rgba(39, 189, 160, 0.15);
+  outline: none;
+  background: #fff;
+}
+
+.modal-buttons button:first-child {
+  background: linear-gradient(135deg, #27bda0 0%, #4299e1 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.modal-buttons button:first-child:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(39, 189, 160, 0.35);
+}

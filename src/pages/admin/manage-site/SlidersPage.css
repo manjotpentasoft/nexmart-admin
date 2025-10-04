@@ -1,0 +1,225 @@
+.sliders-table-section {
+  margin: 0 auto;
+  max-width: 900px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(39, 189, 160, 0.07);
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.sliders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.sliders-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.sliders-title h1 {
+  margin: 0;
+  font-size: 2rem;
+  background: linear-gradient(90deg, #4299e1 0%, #27bda0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 4px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.sliders-title p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.sliders-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sliders-actions input {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  min-width: 220px;
+}
+
+.sliders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.05rem;
+}
+
+.sliders-table thead {
+  background: linear-gradient(90deg, #27bda0 0%, #4299e1 100%);
+  color: #fff;
+}
+
+.sliders-table th,
+.sliders-table td {
+  padding: 14px 12px;
+  text-align: left;
+}
+
+.slider-image {
+  width: 100px; /* adjust as needed */
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.sliders-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Header */
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Controls */
+.slider-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* Actions */
+.slider-actions button {
+  margin-right: 6px;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.slider-edit {
+  background: #4299e1;
+  color: #fff;
+}
+
+.slider-delete {
+  background: #e53e3e;
+  color: #fff;
+}
+
+/* Add button */
+.slider-add-btn {
+  background: linear-gradient(135deg, #27bda0 0%, #4299e1 100%);
+  color: white;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.slider-add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(39, 189, 160, 0.35);
+}
+
+/* Modal */
+.slider-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.slider-modal-content {
+  background: #fff;
+  padding: 26px;
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.slider-modal-content h3 {
+  margin-bottom: 16px;
+}
+
+.slider-modal-content label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.slider-modal-content input,
+.slider-modal-content textarea {
+  width: 95%;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 14px;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.slider-modal-content input:focus,
+.slider-modal-content textarea:focus {
+  border-color: #27bda0;
+  box-shadow: 0 0 0 3px rgba(39, 189, 160, 0.15);
+  outline: none;
+  background: #fff;
+}
+
+.slider-modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.slider-modal-buttons button:first-child {
+  background: linear-gradient(135deg, #27bda0 0%, #4299e1 100%);
+  color: white;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.slider-modal-buttons button:first-child:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(39, 189, 160, 0.35);
+}
+
+.slider-modal-buttons button:last-child {
+  background: #a7abaf;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
