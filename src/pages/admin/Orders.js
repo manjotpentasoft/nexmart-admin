@@ -18,7 +18,7 @@ import AdminLayout from "../../components/AdminLayout";
 function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-  const [loading, setLoading] = useState(true); // <-- loader state
+  const [loading, setLoading] = useState(true); 
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");

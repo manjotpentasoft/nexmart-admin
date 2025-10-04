@@ -72,6 +72,7 @@ const CustomersListPage = () => {
       <div className="orders-header">
         <div className="orders-title">
           <h1>Customers List</h1>
+          <p>View customers here.</p>
         </div>
         <div className="search-area">
           <input

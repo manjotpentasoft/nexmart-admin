@@ -13,6 +13,16 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "../../firebase/firebaseConfig";
+import dayjs from "dayjs";
 
 ChartJS.register(
   CategoryScale,
@@ -25,44 +35,151 @@ ChartJS.register(
 );
 
 export default function AdminDashboard() {
+  const [orders, setOrders] = useState([]);
+  const [summary, setSummary] = useState({
+    totalOrders: 0,
+    pendingOrders: 0,
+    deliveredOrders: 0,
+    canceledOrders: 0,
+    totalProducts: 0,
+    totalCustomers: 0,
+    totalCategories: 0,
+    totalBrands: 0,
+    totalReviews: 0,
+    totalTransactions: 0,
+    totalTickets: 0,
+    pendingTickets: 0,
+    totalEarnings: 0,
+    todayEarnings: 0,
+    thisMonthEarnings: 0,
+    thisYearEarnings: 0,
+  });
 
-  const summary = [
-    { title: "Total Orders", value: "222", iconClass: <FiShoppingCart /> },
-    { title: "Pending Orders", value: "144", iconClass: <FaClipboardList /> },
-    { title: "Delivered Orders", value: "55", iconClass: <FiShoppingCart /> },
-    { title: "Canceled Orders", value: "2", iconClass: <FiShoppingCart /> },
-    { title: "Total Product Sale", value: "74", iconClass: <FiBox /> },
-    { title: "Today Product Order", value: "0", iconClass: <FiBox /> },
-    { title: "This Month Sale", value: "3", iconClass: <FiBox /> },
-    { title: "This Year Product Sale", value: "68", iconClass: <FiBox /> },
-    { title: "Total Earning", value: "₦21,459,756.88", iconClass: <FaMoneyBillWave /> },
-    { title: "Today Pending Earning", value: "₦0", iconClass: <FaMoneyBillWave /> },
-    { title: "This Month Earning", value: "₦1,286,954.72", iconClass: <FaMoneyBillWave /> },
-    { title: "This Year Earning", value: "₦20,392,871.37", iconClass: <FaMoneyBillWave /> },
-    { title: "Total Products", value: "47", iconClass: <FiBox /> },
-    { title: "Total Customers", value: "79", iconClass: <FiUsers /> },
-    { title: "Total Categories", value: "9", iconClass: <FiTag /> },
-    { title: "Total Brands", value: "9", iconClass: <FiTag /> },
-    { title: "Total Reviews", value: "2", iconClass: <FaClipboardList /> },
-    { title: "Total Transactions", value: "211", iconClass: <FaClipboardList /> },
-    { title: "Total Tickets", value: "3", iconClass: <FaClipboardList /> },
-    { title: "Pending Tickets", value: "0", iconClass: <FaClipboardList /> },
-  ];
+  // --- Fetch Orders ---
+  useEffect(() => {
+    const ordersRef = collection(db, "orders");
+    const q = query(ordersRef, orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ordersData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          customerName: data.shipping?.name || "N/A",
+          orderId: doc.id,
+          paymentMethod:
+            data.paymentMethod || data.items?.[0]?.paymentMethod || "N/A",
+          total: data.totalAmount || 0,
+          orderStatus: data.orderStatus || "Pending",
+          createdAt: data.createdAt?.toDate() || new Date(),
+        };
+      });
 
-//   const extraSummary = [
-//     { title: "Open Tickets", value: "3", iconClass: <FaClipboardList /> },
-//     { title: "Total Blogs", value: "8", iconClass: <FaClipboardList /> },
-//     { title: "Total Subscribers", value: "56", iconClass: <FiUsers /> },
-//     { title: "Total System User", value: "1", iconClass: <FiUsers /> },
-//   ];
+      setOrders(ordersData);
 
-  // Chart Data
+      // Update summary counts
+      const totalOrders = ordersData.length;
+      const pendingOrders = ordersData.filter(
+        (o) => o.orderStatus.toLowerCase() === "pending"
+      ).length;
+      const deliveredOrders = ordersData.filter(
+        (o) => o.orderStatus.toLowerCase() === "delivered"
+      ).length;
+      const canceledOrders = ordersData.filter(
+        (o) => o.orderStatus.toLowerCase() === "canceled"
+      ).length;
+      const totalEarnings = ordersData.reduce(
+        (sum, o) => sum + (o.total || 0),
+        0
+      );
+
+      const uniqueCustomers = new Set(ordersData.map((o) => o.customerName));
+
+      // const startOfToday = dayjs().startOf("day");
+      // const endOfToday = dayjs().endOf("day");
+
+      // const todayEarnings = ordersData
+      //   .filter(
+      //     (o) =>
+      //       dayjs(o.createdAt).isAfter(startOfToday) &&
+      //       dayjs(o.createdAt).isBefore(endOfToday)
+      //   )
+      //   .reduce((sum, o) => sum + o.total, 0);
+
+      // Month and year earnings
+      const thisMonthEarnings = ordersData
+        .filter((o) => dayjs(o.createdAt).isSame(dayjs(), "month"))
+        .reduce((sum, o) => sum + o.total, 0);
+
+      const thisYearEarnings = ordersData
+        .filter((o) => dayjs(o.createdAt).isSame(dayjs(), "year"))
+        .reduce((sum, o) => sum + o.total, 0);
+
+      setSummary((prev) => ({
+        ...prev,
+        totalOrders,
+        pendingOrders,
+        deliveredOrders,
+        canceledOrders,
+        totalEarnings,
+        // todayEarnings,
+        thisMonthEarnings,
+        thisYearEarnings,
+        totalCustomers: uniqueCustomers.size,
+      }));
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const collections = [
+        "products",
+        "categories",
+        "customers",
+        "brands",
+        "reviews",
+        "transactions",
+        "tickets",
+      ];
+      const snapshots = await Promise.all(
+        collections.map((c) => getDocs(collection(db, c)))
+      );
+      setSummary((prev) => ({
+        ...prev,
+        totalProducts: snapshots[0].size,
+        totalCategories: snapshots[1].size,
+        totalCustomers: snapshots[2].size,
+        totalBrands: snapshots[3].size,
+        totalReviews: snapshots[4].size,
+        totalTransactions: snapshots[5].size,
+        totalTickets: snapshots[6].size,
+        pendingTickets: snapshots[6].docs.filter(
+          (t) => t.data().status === "pending"
+        ).length,
+      }));
+    };
+    fetchCounts();
+  }, []);
+
+  // --- Sales Chart Data (Last 30 Days) ---
+  const last30Days = Array.from({ length: 30 }).map((_, i) =>
+    dayjs()
+      .subtract(29 - i, "day")
+      .format("DD MMM")
+  );
+  const salesTotals = last30Days.map((day) =>
+    orders
+      .filter((o) => dayjs(o.createdAt).format("DD MMM") === day)
+      .reduce((sum, o) => sum + o.total, 0)
+  );
+
   const salesData = {
-    labels: ["16 Sep", "13 Sep", "10 Sep", "07 Sep", "04 Sep", "01 Sep", "26 Aug", "23 Aug", "20 Aug", "18 Aug"],
+    labels: last30Days,
     datasets: [
       {
-        label: "Sales",
-        data: [0, 1, 1, 0, 0, 1, 1, 2, 0, 1],
+        label: "Sales ($)",
+        data: salesTotals,
         borderColor: "#007bff",
         backgroundColor: "#007bff",
         tension: 0.4,
@@ -71,24 +188,79 @@ export default function AdminDashboard() {
     ],
   };
 
-  const earningsData = {
-    labels: ["16 Sep", "13 Sep", "10 Sep", "07 Sep", "04 Sep", "01 Sep", "26 Aug", "23 Aug", "20 Aug", "18 Aug"],
-    datasets: [
-      {
-        label: "Earnings",
-        data: [0, 500000, 200000, 0, 0, 1000000, 1500000, 2500000, 2000000, 2700000],
-        borderColor: "#dc3545",
-        backgroundColor: "#dc3545",
-        tension: 0.4,
-        fill: false,
-      },
-    ],
-  };
-
-  const orders = [
-    { customer: "John Doe", orderId: "ORD-20250915-345", method: "Cash On Delivery", total: "$4,766.28" },
-    { customer: "Jane Smith", orderId: "ORD-20250915-344", method: "Cash On Delivery", total: "$1,588.76" },
-    { customer: "X X", orderId: "ORD-20250912-343", method: "Cash On Delivery", total: "$13,958.98" },
+  const summaryCards = [
+    {
+      title: "Total Orders",
+      value: summary.totalOrders,
+      icon: <FiShoppingCart />,
+    },
+    {
+      title: "Pending Orders",
+      value: summary.pendingOrders,
+      icon: <FaClipboardList />,
+    },
+    {
+      title: "Delivered Orders",
+      value: summary.deliveredOrders,
+      icon: <FiShoppingCart />,
+    },
+    {
+      title: "Canceled Orders",
+      value: summary.canceledOrders,
+      icon: <FiShoppingCart />,
+    },
+    { title: "Total Products", value: summary.totalProducts, icon: <FiBox /> },
+    {
+      title: "Total Customers",
+      value: summary.totalCustomers,
+      icon: <FiUsers />,
+    },
+    {
+      title: "Total Categories",
+      value: summary.totalCategories,
+      icon: <FiTag />,
+    },
+    { title: "Total Brands", value: summary.totalBrands, icon: <FiTag /> },
+    // {
+    //   title: "Total Reviews",
+    //   value: summary.totalReviews,
+    //   icon: <FaClipboardList />,
+    // },
+    // {
+    //   title: "Total Transactions",
+    //   value: summary.totalTransactions,
+    //   icon: <FaClipboardList />,
+    // },
+    // {
+    //   title: "Total Tickets",
+    //   value: summary.totalTickets,
+    //   icon: <FaClipboardList />,
+    // },
+    // {
+    //   title: "Pending Tickets",
+    //   value: summary.pendingTickets,
+    //   icon: <FaClipboardList />,
+    // },
+    {
+      title: "Total Earnings",
+      value: `$${summary.totalEarnings.toLocaleString()}`,
+      icon: <FaMoneyBillWave />,
+    },
+    // {
+    //   title: "Today Earnings",
+    //   value: `$${summary.todayEarnings.toLocaleString()}`,
+    //   icon: <FaMoneyBillWave />,
+    // },
+    {
+      title: "This Month Earnings",
+      value: `$${summary.thisMonthEarnings.toLocaleString()}`,
+      icon: <FaMoneyBillWave />,
+    },
+    {
+      title: "This Year Earnings",
+      value: `$${summary.thisYearEarnings.toLocaleString()}`,
+      icon: <FaMoneyBillWave />,
+    },
   ];
 
   return (
@@ -101,30 +273,16 @@ export default function AdminDashboard() {
         </p>
       </header>
 
-      {/* Extra KPI Cards */}
+      {/* Summary Cards */}
       <section className="admin-dashboard-section">
         <div className="admin-dashboard-cards">
-          {/* {extraSummary.map((card, idx) => (
+          {summaryCards.map((card, idx) => (
             <div className="admin-dashboard-card summary-card" key={idx}>
-              <span className="admin-dashboard-icon" style={{ fontSize: "2rem", marginRight: "18px" }}>
-                {card.iconClass}
-              </span>
-              <div className="summary-card-content">
-                <h2>{card.title}</h2>
-                <div className="summary-card-value">{card.value}</div>
-              </div>
-            </div>
-          ))} */}
-        </div>
-      </section>
-
-      {/* Main Summary Cards */}
-      <section className="admin-dashboard-section">
-        <div className="admin-dashboard-cards">
-          {summary.map((card, idx) => (
-            <div className="admin-dashboard-card summary-card" key={idx}>
-              <span className="admin-dashboard-icon" style={{ fontSize: "2rem", marginRight: "18px" }}>
-                {card.iconClass}
+              <span
+                className="admin-dashboard-icon"
+                style={{ fontSize: "2rem", marginRight: "18px" }}
+              >
+                {card.icon}
               </span>
               <div className="summary-card-content">
                 <h2>{card.title}</h2>
@@ -135,15 +293,11 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* Charts */}
+      {/* Sales Chart */}
       <section className="admin-dashboard-charts">
         <div className="chart-card">
-          <h2>Monthly Product Sales Report</h2>
+          <h2>Sales in Last 30 Days</h2>
           <Line data={salesData} />
-        </div>
-        <div className="chart-card">
-          <h2>Monthly Earnings Report</h2>
-          <Line data={earningsData} />
         </div>
       </section>
 
@@ -157,16 +311,18 @@ export default function AdminDashboard() {
                 <th>Customer</th>
                 <th>Order ID</th>
                 <th>Payment Method</th>
+                <th>Status</th>
                 <th>Total</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((order, idx) => (
-                <tr key={idx}>
-                  <td>{order.customer}</td>
+              {orders.slice(0, 10).map((order) => (
+                <tr key={order.id}>
+                  <td>{order.customerName}</td>
                   <td className="order-link">{order.orderId}</td>
-                  <td>{order.method}</td>
-                  <td>{order.total}</td>
+                  <td>{order.paymentMethod}</td>
+                  <td>{order.orderStatus}</td>
+                  <td>${order.total.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -245,7 +401,7 @@ export default function AdminDashboard() {
 //         { title: "Total Customers", value: userData?.totalCustomers || 0, iconClass: <FiUsers /> },
 //         { title: "Total Categories", value: userData?.totalCategories || 0, iconClass: <FiTag /> },
 //         { title: "Total Brands", value: userData?.totalBrands || 0, iconClass: <FiTag /> },
-//         { title: "Total Earning", value: `₦${userData?.totalEarnings?.toLocaleString() || 0}`, iconClass: <FaMoneyBillWave /> },
+//         { title: "Total Earning", value: `$${userData?.totalEarnings?.toLocaleString() || 0}`, iconClass: <FaMoneyBillWave /> },
 //       ]);
 //     }
 //   }, [userData, orders]);
@@ -334,7 +490,7 @@ export default function AdminDashboard() {
 //                   <td>{order.customerName}</td>
 //                   <td className="order-link">{order.orderId}</td>
 //                   <td>{order.paymentMethod}</td>
-//                   <td>₦{order.total?.toLocaleString()}</td>
+//                   <td>${order.total?.toLocaleString()}</td>
 //                 </tr>
 //               ))}
 //             </tbody>
