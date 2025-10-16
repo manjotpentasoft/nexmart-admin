@@ -1,0 +1,143 @@
+.cart-section {
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
+  background: #f9f9f9;
+}
+
+.cart-title {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.cart-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cart-products {
+  flex: 2;
+  overflow-x: auto;
+}
+
+.cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.cart-table th,
+.cart-table td {
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.cart-table th {
+  background: #f2f2f2;
+  font-weight: 600;
+}
+
+.product-column {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cart-product-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.qty-input {
+  width: 50px;
+  padding: 5px;
+  text-align: center;
+  outline-style: hidden;
+}
+
+.remove-btn {
+  background: transparent;
+  border: none;
+  color: red;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 20px 0;
+  font-style: italic;
+  color: #555;
+}
+
+/* Sidebar */
+.cart-sidebar {
+  flex: 1;
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.summary-row span select {
+  padding: 5px;
+}
+
+.summary-row.total {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.summary-row.coupon {
+  display: flex;
+  gap: 5px;
+}
+
+.summary-row.coupon input {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  outline: none;
+  margin-bottom: 6px;
+}
+
+.summary-row.coupon button {
+  padding: 6px 12px;
+  background: #ff4c3b;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.checkout-btn {
+  padding: 10px;
+  background: #ff4c3b;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .cart-container {
+    flex-direction: column;
+  }
+}

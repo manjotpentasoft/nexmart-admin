@@ -36,6 +36,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 10px;
 }
 
 .add-brand-btn:hover {

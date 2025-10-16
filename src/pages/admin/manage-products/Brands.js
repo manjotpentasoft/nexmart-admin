@@ -2,22 +2,18 @@ import React, { useState, useEffect } from "react";
 import "./BrandsPage.css";
 import AdminLayout from "../../../components/AdminLayout";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { db } from "../../../firebase/firebaseConfig";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
-
-// helper: file to base64
-const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (err) => reject(err);
-  });
+import {
+  fetchBrands,
+  addBrand,
+  updateBrand,
+  deleteBrand,
+} from "../../../firebase/brandsService";
 
 function BrandsPage() {
   const [brands, setBrands] = useState([]);
   const [filteredBrands, setFilteredBrands] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -25,36 +21,21 @@ function BrandsPage() {
   const [newBrand, setNewBrand] = useState({ name: "", logo: null });
   const [editingBrand, setEditingBrand] = useState(null);
 
-  // Fetch brands from products + existing brands collection
-  const fetchBrands = async () => {
-    const productSnapshot = await getDocs(collection(db, "products"));
-    const brandMap = new Map();
-
-    // Gather brands from products
-    productSnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.brand) {
-        const name = data.brand.trim();
-        if (!brandMap.has(name)) brandMap.set(name, { name, productIds: [doc.id], logo: null });
-        else brandMap.get(name).productIds.push(doc.id);
-      }
-    });
-
-    // Merge existing logos from brands collection
-    const brandsSnapshot = await getDocs(collection(db, "brands"));
-    brandsSnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (brandMap.has(data.name)) brandMap.get(data.name).logo = data.logo || null;
-      else brandMap.set(data.name, { name: data.name, productIds: [], logo: data.logo || null });
-    });
-
-    const brandsArray = Array.from(brandMap.values());
-    setBrands(brandsArray);
-    setFilteredBrands(brandsArray);
+  const loadBrands = async () => {
+    setLoading(true);
+    try {
+      const brandList = await fetchBrands();
+      setBrands(brandList);
+      setFilteredBrands(brandList);
+    } catch (err) {
+      console.error("Error fetching brands:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchBrands();
+    loadBrands();
   }, []);
 
   // Search filter
@@ -67,70 +48,47 @@ function BrandsPage() {
   }, [searchTerm, brands]);
 
   // Add brand
-  const addBrand = async () => {
+  const handleAddBrand = async () => {
     if (!newBrand.name.trim()) return;
+    setLoading(true);
     try {
-      const logoBase64 = newBrand.logo ? await fileToBase64(newBrand.logo) : null;
-      await addDoc(collection(db, "brands"), { name: newBrand.name.trim(), logo: logoBase64, createdAt: new Date() });
+      await addBrand(newBrand.name, newBrand.logo);
       setNewBrand({ name: "", logo: null });
       setShowAddModal(false);
-      fetchBrands();
+      await loadBrands();
     } catch (err) {
       console.error("Error adding brand:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Edit brand (updates products & brands collection)
-  const editBrandName = async () => {
-    if (!editingBrand) return;
+  // Edit brand
+  const handleEditBrand = async () => {
+    setLoading(true);
     try {
-      // Update all linked products
-      const batchUpdates = editingBrand.productIds.map((productId) => {
-        const productRef = doc(db, "products", productId);
-        return updateDoc(productRef, { brand: editingBrand.name });
-      });
-
-      // Update or create brand document
-      const brandsSnapshot = await getDocs(collection(db, "brands"));
-      let found = false;
-      for (const docSnap of brandsSnapshot.docs) {
-        if (docSnap.data().name === editingBrand.originalName) {
-          const brandRef = doc(db, "brands", docSnap.id);
-          const logo = editingBrand.logo instanceof File ? await fileToBase64(editingBrand.logo) : editingBrand.logo;
-          await updateDoc(brandRef, { name: editingBrand.name, logo });
-          found = true;
-        }
-      }
-
-      if (!found && editingBrand.logo instanceof File) {
-        const logoBase64 = await fileToBase64(editingBrand.logo);
-        await addDoc(collection(db, "brands"), { name: editingBrand.name, logo: logoBase64, createdAt: new Date() });
-      }
-
-      await Promise.all(batchUpdates);
+      await updateBrand(editingBrand);
       setShowEditModal(false);
       setEditingBrand(null);
-      fetchBrands();
+      await loadBrands();
     } catch (err) {
       console.error("Error editing brand:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Delete brand (removes products + brand doc)
-  const deleteBrand = async (brand) => {
-    if (!window.confirm(`Delete all products under "${brand.name}"?`)) return;
+  // Delete brand
+  const handleDeleteBrand = async (brand) => {
+    if (!window.confirm(`Delete "₹{brand.name}"?`)) return;
+    setLoading(true);
     try {
-      const deletes = brand.productIds.map((id) => deleteDoc(doc(db, "products", id)));
-      await Promise.all(deletes);
-
-      const brandsSnapshot = await getDocs(collection(db, "brands"));
-      for (const docSnap of brandsSnapshot.docs) {
-        if (docSnap.data().name === brand.name) await deleteDoc(doc(db, "brands", docSnap.id));
-      }
-
-      fetchBrands();
+      await deleteBrand(brand);
+      await loadBrands();
     } catch (err) {
       console.error("Error deleting brand:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,42 +114,52 @@ function BrandsPage() {
         </div>
       </div>
 
-      <div className="brands-table-section">
-        {filteredBrands.length > 0 ? (
-          <table className="brands-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Logo</th>
-                <th>Products</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBrands.map((brand) => (
-                <tr key={brand.name}>
-                  <td>{brand.name}</td>
-                  <td>{brand.logo ? <img src={brand.logo} alt={brand.name} height="40" /> : <span>No logo</span>}</td>
-                  <td>{brand.productIds.length}</td>
-                  <td>
-                    <button
-                      className="action-btn edit"
-                      onClick={() => setEditingBrand({ ...brand, originalName: brand.name }) || setShowEditModal(true)}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button className="action-btn delete" onClick={() => deleteBrand(brand)}>
-                      <FaTrash color="red" />
-                    </button>
-                  </td>
+      {loading && <div className="loader"></div>}
+
+      {!loading && (
+        <div className="brands-table-section">
+          {filteredBrands.length > 0 ? (
+            <table className="brands-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Logo</th>
+                  <th>Products</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No brands found.</p>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {filteredBrands.map((brand) => (
+                  <tr key={brand.name}>
+                    <td>{brand.name}</td>
+                    <td>{brand.logo ? <img src={brand.logo} alt={brand.name} height="40" /> : "No logo"}</td>
+                    <td>{brand.productIds.length}</td>
+                    <td>
+                      <button
+                        className="action-btn edit"
+                        onClick={() => {
+                          setEditingBrand(brand);
+                          setShowEditModal(true);
+                        }}
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="action-btn delete"
+                        onClick={() => handleDeleteBrand(brand)}
+                      >
+                        <FaTrash color="red" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No brands found.</p>
+          )}
+        </div>
+      )}
 
       {/* Add Brand Modal */}
       {showAddModal && (
@@ -203,12 +171,15 @@ function BrandsPage() {
               placeholder="Brand Name"
               value={newBrand.name}
               onChange={(e) => setNewBrand({ ...newBrand, name: e.target.value })}
-              required
             />
-            <input type="file" accept="image/*" onChange={(e) => setNewBrand({ ...newBrand, logo: e.target.files[0] })} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setNewBrand({ ...newBrand, logo: e.target.files[0] })}
+            />
             <div className="modal-actions">
               <button onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button onClick={addBrand} disabled={!newBrand.name.trim()}>
+              <button onClick={handleAddBrand} disabled={!newBrand.name.trim()}>
                 Add
               </button>
             </div>
@@ -226,10 +197,14 @@ function BrandsPage() {
               value={editingBrand.name}
               onChange={(e) => setEditingBrand({ ...editingBrand, name: e.target.value })}
             />
-            <input type="file" accept="image/*" onChange={(e) => setEditingBrand({ ...editingBrand, logo: e.target.files[0] })} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setEditingBrand({ ...editingBrand, logo: e.target.files[0] })}
+            />
             <div className="modal-actions">
               <button onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button onClick={editBrandName}>Save Changes</button>
+              <button onClick={handleEditBrand}>Save Changes</button>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProductsPage from "./pages/admin/manage-products/Products";
 import OrdersPage from "./pages/admin/Orders";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -29,6 +29,14 @@ import Signup from "./pages/SignupPage";
 import PublicRoute from "./components/PublicRoute";
 import ManagePages from "./pages/admin/ManagePages";
 import SlidersPage from "./pages/admin/manage-site/Sliders";
+import ProductView from "./pages/home/ProductView";
+import HomePage from "./pages/home/HomePage";
+import CartPage from "./pages/home/CartPage";
+import ShopPage from "./pages/home/ShopPage";
+import AboutPage from "./pages/home/AboutPage";
+import ContactPage from "./pages/home/ContactPage";
+import ContactsPage from "./pages/admin/ContactsPage";
+import WishlistPage from "./pages/home/WishlistPage";
 
 export default function App() {
   return (
@@ -37,23 +45,38 @@ export default function App() {
       <SidebarProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+            {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
+            <Route path="/" element={<HomePage />} />
             <Route
-              path="/dashboard"
+              path="/login"
               element={
-                  <PrivateRoute>
-                <AdminDashboard />
-                  </PrivateRoute>
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <PublicRoute>
+                  <Signup />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/orders"
               element={
-                  <PrivateRoute>
+                <PrivateRoute>
                   <OrdersPage />
-                  </PrivateRoute>
+                </PrivateRoute>
               }
             />
             <Route
@@ -63,157 +86,174 @@ export default function App() {
             <Route
               path="/admin/products"
               element={
-                  <PrivateRoute>
-                <ProductsPage />
+                <PrivateRoute>
+                  <ProductsPage />
                 </PrivateRoute>
               }
             />
             <Route
               path="/admin/brand"
               element={
-                  <PrivateRoute>
-                <BrandsPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <BrandsPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/create"
               element={
-                  <PrivateRoute>
-                <AddProductPage />
-                 </PrivateRoute>
+                <PrivateRoute>
+                  <AddProductPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/create/physical"
               element={
-                  <PrivateRoute>
-                <CreatePhysicalProduct />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <CreatePhysicalProduct />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/create/digital"
               element={
-                  <PrivateRoute>
-                <CreateDigitalProduct />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <CreateDigitalProduct />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/products"
               element={
-                  <PrivateRoute>
-                <ProductsPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <ProductsPage />
+                </PrivateRoute>
               }
             />
+            <Route path="/product/view/:productId" element={<ProductView />} />
             <Route
               path="/admin/stock/out/product"
               element={
-                  <PrivateRoute>
-                <StockOutProductsPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <StockOutProductsPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/categories"
               element={
-                  <PrivateRoute>
-                <CategoriesPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <CategoriesPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/subcategories"
               element={
-                  <PrivateRoute>
-                <SubCategoriesPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <SubCategoriesPage />
+                </PrivateRoute>
               }
             />
-            <Route 
+            <Route
               path="/admin/coupons"
               element={
-                  <PrivateRoute>
-                <CouponsPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <CouponsPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/shipping"
               element={
-                  <PrivateRoute>
-                <ShippingPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <ShippingPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/state-charge"
               element={
-                  <PrivateRoute>
-                <StateChargePage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <StateChargePage />
+                </PrivateRoute>
               }
             />
             <Route path="/admin/currency" element={<CurrencyPage />} />
             <Route
-            path="/admin/tax"
-            element={
+              path="/admin/tax"
+              element={
                 <PrivateRoute>
-              <TaxPage />
+                  <TaxPage />
                 </PrivateRoute>
-            }
+              }
             />
             <Route
               path="/admin/customers"
               element={
-                  <PrivateRoute>
-                <CustomersListPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <CustomersListPage />
+                </PrivateRoute>
               }
             />
-            <Route path="/admin/customers/:id" element={<CustomerDetailsPage />} />
+            <Route
+              path="/admin/customers/:id"
+              element={<CustomerDetailsPage />}
+            />
             <Route
               path="/admin/profile"
               element={
-                  <PrivateRoute>
-                <MyProfile />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <MyProfile />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/notifications"
               element={
-                  <PrivateRoute>
-                <NotificationsPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <NotificationsPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/change-password"
               element={
-                  <PrivateRoute>
-                <ChangePassword />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <ChangePassword />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/sliders"
               element={
-                  <PrivateRoute>
-                <SlidersPage />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <SlidersPage />
+                </PrivateRoute>
               }
             />
             <Route
               path="/admin/pages"
               element={
-                  <PrivateRoute>
-                <ManagePages />
-                  </PrivateRoute>
+                <PrivateRoute>
+                  <ManagePages />
+                </PrivateRoute>
               }
             />
+            <Route
+              path="/admin/contacts"
+              element={
+                <PrivateRoute>
+                  <ContactsPage />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
           </Routes>
         </BrowserRouter>
       </SidebarProvider>

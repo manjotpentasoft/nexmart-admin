@@ -97,7 +97,7 @@ const CustomerDetailsPage = () => {
                 <tr key={order.id}>
                   <td
                     style={{ cursor: "pointer", color: "#4299e1" }}
-                    onClick={() => navigate(`/admin/orders/invoice/${order.id}`)}
+                    onClick={() => navigate(`/admin/orders/invoice/₹{order.id}`)}
                   >
                     {order.id}
                   </td>
@@ -108,7 +108,7 @@ const CustomerDetailsPage = () => {
                   </td>
                   <td>
                     <span
-                      className={`order-status-badge ${
+                      className={`order-status-badge ₹{
                         order.orderStatus?.toLowerCase() || "pending"
                       }`}
                     >
@@ -117,7 +117,7 @@ const CustomerDetailsPage = () => {
                   </td>
                   <td>{(order.items || []).length}</td>
                   <td>{calculateTotalItems(order)}</td>
-                  <td>${order.totalAmount?.toLocaleString() || 0}</td>
+                  <td>₹{order.totalAmount?.toLocaleString() || 0}</td>
                 </tr>
               ))
             ) : (

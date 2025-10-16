@@ -204,3 +204,94 @@
     margin-left: 0;
   }
 }
+
+/* === IMAGE PREVIEWS === */
+.image-preview {
+  margin-top: 12px;
+}
+
+.image-preview img {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.gallery-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.gallery-previews img {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #cbd5e0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.gallery-previews img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(39, 189, 160, 0.3);
+}
+
+/* === SPECIFICATIONS === */
+.add-spec-btn {
+  background: linear-gradient(90deg, #27bda0 0%, #4299e1 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+
+.add-spec-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(39, 189, 160, 0.3);
+}
+
+.remove-spec-btn {
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  height: 44px;
+  align-self: center;
+  transition: all 0.2s;
+}
+
+.remove-spec-btn:hover {
+  background: #e63946;
+  transform: scale(1.05);
+}
+
+/* === SPEC FORM ROW LAYOUT === */
+.form-section .form-row button.remove-spec-btn {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .gallery-previews img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .remove-spec-btn {
+    margin-top: 4px;
+    width: 100%;
+  }
+}

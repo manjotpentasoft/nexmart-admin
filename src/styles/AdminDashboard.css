@@ -157,3 +157,63 @@
   color: #007bff;
   cursor: pointer;
 }
+
+/* === Order Status Badges === */
+.orders-table td.status {
+  text-transform: capitalize;
+  font-weight: 500;
+  text-align: center;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+/* Status Variants */
+.status-badge.pending {
+  background-color: #fff8e5;
+  color: #b7791f;
+  border: 1px solid #f6e05e;
+}
+
+.status-badge.progress {
+  background-color: #e5e7eb;
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+.status-badge.delivered {
+  background-color: #e6fffa;
+  color: #2f855a;
+  border: 1px solid #68d391;
+}
+
+.status-badge.canceled {
+  background-color: #ffe6e6;
+  color: #c53030;
+  border: 1px solid #fc8181;
+}
+
+/* Hover Effects */
+.status-badge:hover {
+  transform: scale(1.05);
+  cursor: default;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    width: 90%;
+    height: auto;
+  }
+}

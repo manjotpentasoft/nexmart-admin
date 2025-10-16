@@ -3,10 +3,8 @@ import "./AddProductPage.css";
 import { FaProductHunt, FaFileCode } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../../../components/AdminLayout";
-import { useSidebar } from "../../../../contexts/SidebarContext";
 
 function AddProductPage() {
-  const { isSidebarOpen } = useSidebar();
   const navigate = useNavigate();
 
   return (

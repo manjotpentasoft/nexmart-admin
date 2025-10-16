@@ -1,0 +1,97 @@
+.instagram-section-custom {
+  padding: 0;
+  margin: 0;
+  background: #f7f7fa;
+  width: 100%;
+}
+
+.instagram-outer-container {
+  max-width: 1560px;
+  margin: 0;
+  padding: 0;
+}
+
+.carousel-viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  height: 352px;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.75s cubic-bezier(0.77, 0, 0.18, 1);
+  height: 100%;
+  white-space: nowrap;
+}
+
+.carousel-slide {
+  min-width: 425px;
+  max-width: 425px;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+}
+
+
+.inner-insta-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+  padding: 0;
+}
+
+.image-box {
+  width: 100%;
+  height: 100%;
+}
+
+.image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.text-box {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.text-box a {
+  pointer-events: auto;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.25s, background 0.25s;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.carousel-slide:hover .text-box a {
+  opacity: 1;
+}
+
+.insta-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.carousel-dots {
+  display: none;
+}

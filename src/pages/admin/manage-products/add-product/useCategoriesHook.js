@@ -10,10 +10,13 @@ export default function useCategories(selectedCategoryId) {
   // Fetch all categories
   useEffect(() => {
     const fetchCategories = async () => {
-      const categoriesRef = collection(db, "categories");
-      const snapshot = await getDocs(categoriesRef);
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setCategories(data);
+      try {
+        const snapshot = await getDocs(collection(db, "categories"));
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setCategories(data);
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
     };
     fetchCategories();
   }, []);
@@ -25,21 +28,29 @@ export default function useCategories(selectedCategoryId) {
         setSubCategories([]);
         return;
       }
-      const subRef = collection(db, "categories", selectedCategoryId, "subcategories");
-      const snapshot = await getDocs(subRef);
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setSubCategories(data);
+      try {
+        const snapshot = await getDocs(
+          collection(db, "categories", selectedCategoryId, "subcategories")
+        );
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setSubCategories(data);
+      } catch (err) {
+        console.error("Error fetching subcategories:", err);
+      }
     };
     fetchSubcategories();
   }, [selectedCategoryId]);
 
-  // Fetch brands
+  // Fetch all brands
   useEffect(() => {
     const fetchBrands = async () => {
-      const brandsRef = collection(db, "brands");
-      const snapshot = await getDocs(brandsRef);
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setBrands(data);
+      try {
+        const snapshot = await getDocs(collection(db, "brands"));
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setBrands(data);
+      } catch (err) {
+        console.error("Error fetching brands:", err);
+      }
     };
     fetchBrands();
   }, []);

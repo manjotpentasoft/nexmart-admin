@@ -178,7 +178,7 @@ export default function AdminDashboard() {
     labels: last30Days,
     datasets: [
       {
-        label: "Sales ($)",
+        label: "Sales (₹)",
         data: salesTotals,
         borderColor: "#007bff",
         backgroundColor: "#007bff",
@@ -243,22 +243,22 @@ export default function AdminDashboard() {
     // },
     {
       title: "Total Earnings",
-      value: `$${summary.totalEarnings.toLocaleString()}`,
+      value: `₹${summary.totalEarnings.toLocaleString()}`,
       icon: <FaMoneyBillWave />,
     },
     // {
     //   title: "Today Earnings",
-    //   value: `$${summary.todayEarnings.toLocaleString()}`,
+    //   value: `₹₹{summary.todayEarnings.toLocaleString()}`,
     //   icon: <FaMoneyBillWave />,
     // },
     {
       title: "This Month Earnings",
-      value: `$${summary.thisMonthEarnings.toLocaleString()}`,
+      value: `₹${summary.thisMonthEarnings.toLocaleString()}`,
       icon: <FaMoneyBillWave />,
     },
     {
       title: "This Year Earnings",
-      value: `$${summary.thisYearEarnings.toLocaleString()}`,
+      value: `₹${summary.thisYearEarnings.toLocaleString()}`,
       icon: <FaMoneyBillWave />,
     },
   ];
@@ -321,8 +321,14 @@ export default function AdminDashboard() {
                   <td>{order.customerName}</td>
                   <td className="order-link">{order.orderId}</td>
                   <td>{order.paymentMethod}</td>
-                  <td>{order.orderStatus}</td>
-                  <td>${order.total.toLocaleString()}</td>
+                  <td>
+                    <span
+                      className={`status-badge ₹{order.orderStatus.toLowerCase()}`}
+                    >
+                      {order.orderStatus}
+                    </span>
+                  </td>
+                  <td>₹{order.total.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -401,7 +407,7 @@ export default function AdminDashboard() {
 //         { title: "Total Customers", value: userData?.totalCustomers || 0, iconClass: <FiUsers /> },
 //         { title: "Total Categories", value: userData?.totalCategories || 0, iconClass: <FiTag /> },
 //         { title: "Total Brands", value: userData?.totalBrands || 0, iconClass: <FiTag /> },
-//         { title: "Total Earning", value: `$${userData?.totalEarnings?.toLocaleString() || 0}`, iconClass: <FaMoneyBillWave /> },
+//         { title: "Total Earning", value: `₹₹{userData?.totalEarnings?.toLocaleString() || 0}`, iconClass: <FaMoneyBillWave /> },
 //       ]);
 //     }
 //   }, [userData, orders]);
@@ -490,7 +496,7 @@ export default function AdminDashboard() {
 //                   <td>{order.customerName}</td>
 //                   <td className="order-link">{order.orderId}</td>
 //                   <td>{order.paymentMethod}</td>
-//                   <td>${order.total?.toLocaleString()}</td>
+//                   <td>₹{order.total?.toLocaleString()}</td>
 //                 </tr>
 //               ))}
 //             </tbody>

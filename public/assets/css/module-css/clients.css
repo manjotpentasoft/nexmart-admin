@@ -1,0 +1,183 @@
+
+/** clients-section **/
+
+.clients-section{
+  position: relative;
+}
+
+.clients-section .sec-title{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clients-section .clients-list{
+  position: relative;
+  display: block;
+  border: solid;
+  border-width: 1px;
+  border-color: #E5E5E5;
+}
+
+.clients-section .clients-list li{
+  position: relative;
+  display: inline-block;
+  float: left;
+  width: 16.666%;
+  text-align: center;
+  border-right: solid;
+  border-width: 1px;
+  border-color: #E5E5E5;
+}
+
+.clients-section .clients-list li:nth-child(6),
+.clients-section .clients-list li:nth-child(12){
+  border-right: none;
+}
+
+.clients-section .clients-list li a{
+  position: relative;
+  display: inline-block;
+  padding: 8px 20px;
+  z-index: 1;
+}
+
+.clients-section .clients-list li:first-child,
+.clients-section .clients-list li:nth-child(2),
+.clients-section .clients-list li:nth-child(3),
+.clients-section .clients-list li:nth-child(4),
+.clients-section .clients-list li:nth-child(5),
+.clients-section .clients-list li:nth-child(6){
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.clients-section .clients-list li img{
+  width: 100%;
+  max-width: auto;
+  margin: 0 auto;
+}
+
+.clients-section .clients-list li a:before{
+  position: absolute;
+  content: '';
+  background: #fff;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  left: -2px;
+  top: -2px;
+  z-index: -1;
+  opacity: 0;
+  box-shadow: 0px 10px 30px 0px rgba(45, 36, 146, 0.10);
+  transition: all 500ms ease;
+}
+
+.clients-section .clients-list li a:hover:before{
+  opacity: 1;
+}
+
+
+/** rtl-css **/
+
+.rtl .clients-section .clients-list li{
+  float: right;
+  border-right: none;
+  border-left: 1px solid #E5E5E5;
+}
+
+.rtl .clients-section .clients-list li:nth-child(6),
+.rtl .clients-section .clients-list li:nth-child(12){
+  border-left: none;
+}
+
+/** responsive-css **/
+
+@media only screen and (max-width: 1200px){
+  
+  .clients-section.pb_150{
+    padding-bottom: 80px;
+  }
+}
+
+@media only screen and (max-width: 991px){
+  
+}
+
+@media only screen and (max-width: 767px){
+  .clients-section .clients-list li{
+    width: 33.333%;
+  }
+}
+
+@media only screen and (max-width: 599px){
+  .clients-section .clients-list li{
+    width: 50%;
+  }
+
+  .clients-section .sec-title{
+    display: block;
+  }
+}
+
+@media only screen and (max-width: 499px){
+  .clients-section .clients-list li{
+    width: 100%;
+  }
+
+  .rtl .clients-section .clients-list li{
+    border-left: none;
+  }
+
+  .clients-section .clients-list li{
+    border-right: none;
+    border-bottom: 1px solid #E5E5E5;
+  }
+
+  .clients-section .clients-list li:last-child{
+    border-bottom: none;
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

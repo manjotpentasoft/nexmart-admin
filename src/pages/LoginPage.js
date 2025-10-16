@@ -21,8 +21,6 @@ function Login() {
     setLoading(true);
     try {
       const userData = await login(email, password);
-      toast.success("Login successful!");
-
       // Remember me
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
@@ -37,7 +35,7 @@ function Login() {
         console.log("Realtime user data:", data);
       });
 
-      navigate("/dashboard");
+      navigate("/admin/dashboard");
     } catch (error) {
       console.error(error);
       toast.error(error.message);
@@ -51,8 +49,6 @@ function Login() {
     setLoading(true);
     try {
       const userData = await loginWithGoogle();
-      toast.success("Google login successful!");
-
       // Listen to user data real-time
       listenToUser(userData.uid, (data) => {
         console.log("Realtime user data:", data);

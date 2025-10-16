@@ -1,0 +1,455 @@
+
+/** shop-sidebar **/
+
+.shop-sidebar{
+  position: relative;
+  border: 1px solid #E5E5E5;
+  padding: 40px 30px;
+}
+
+.shop-sidebar .sidebar-widget{
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.shop-sidebar .sidebar-widget:last-child{
+  border-bottom: none;
+}
+
+.shop-sidebar .search-widget .form-group{
+  position: relative;
+  margin-bottom: 0px;
+}
+
+.shop-sidebar .search-widget .form-group input[type='search']{
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 49px;
+  border: solid;
+  border-width: 1px;
+  border-radius: 50px;
+  padding: 10px 70px 10px 20px;
+  font-size: 14px;
+  color: var(--theme-color);
+  transition: all 500ms ease;
+}
+
+.shop-sidebar .search-widget .form-group button[type='submit']{
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: inline-block;
+  width: 57px;
+  height: 39px;
+  border-radius: 45px;
+  text-align: center;
+  font-size: 17px;
+  color: #fff;
+  transition: all 500ms ease;
+}
+
+.shop-sidebar .search-widget .form-group input:focus{
+  border-color: #FFAC00 !important;
+  color: #FFAC00;
+}
+
+.shop-sidebar .search-widget .form-group input:focus + button,
+.shop-sidebar .search-widget .form-group button:hover{
+  background: #FFAC00;
+}
+
+.shop-sidebar .sidebar-widget .widget-title h4 {
+  font-size: 20px;
+  line-height: 30px;
+}
+
+.price-range-slider{
+  position: relative;
+  width:100%;
+}
+
+.price-range-slider .range-value{
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.price-range-slider .range-value span{
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--title-color);
+  margin-right: 5px;
+}
+
+.price-range-slider .range-value input{
+  width: 100%;
+  background: none;
+  font-size: 14px;
+  line-height: 24px;
+  font-family: var(--text-font);
+  color: var(--title-color);
+  box-shadow: none;
+  border: none;
+}
+
+.price-range-slider .range-bar{
+  border: none;
+  height: 2px;  
+  width: 100%;
+  background: rgba(255, 172, 0, 0.20);
+  border-radius: 30px;
+}
+
+.price-range-slider .ui-slider-range{
+  background: #FFAC00;
+  height: 2px;
+}
+
+.price-range-slider .ui-slider-handle{
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0px 4px 18px 0px rgba(0, 0, 0, 0.10);
+  top: -8px;
+  background: #FFAC00;
+  border: none;
+}
+
+.price-range-slider .range-box{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price-range-slider .range-box .theme-btn{
+  padding: 4.5px 21px;
+}
+
+.shop-sidebar .check-box input {
+  display: none;
+}
+
+.shop-sidebar .check-box label {
+  position: relative;
+  font-size: 16px;
+  line-height: 30px;
+  color: var(--title-color);
+  padding-left: 26px;
+  display: inline-block;
+  cursor: pointer;
+  margin-bottom: 0px;
+}
+
+.shop-sidebar .check-box label:before{
+  position: absolute;
+  content: '';
+  left: 0px;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #DDDDDD;
+  background: transparent;
+}
+
+.shop-sidebar .check-box label:after {
+  position: absolute;
+  content: '\e928';
+  font-family: 'icomoon';
+  left: 0px;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 8px;
+  color: #fff;
+  background-image: none;
+  opacity: 0;
+}
+
+.shop-sidebar .check-box input:checked + label:after {
+  opacity: 1;
+}
+
+.shop-sidebar .check-box input:checked + label:before{
+
+}
+
+.shop-sidebar .category-widget .accordion{
+  position: relative;
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn{
+  position: relative;
+  font-size: 16px;
+  line-height: 30px;
+  color: var(--title-color);
+  padding-left: 28px;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn:before{
+  position: absolute;
+  content: '';
+  left: 0px;
+  top: 7px;
+  width: 15px;
+  height: 15px;
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #DDDDDD;
+  background: transparent;
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn.active:before{
+
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn .icon-box{
+  position: absolute;
+  content: '';
+  right: 0px;
+  top: 7px;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #B5B5B5;
+  font-size: 14px;
+  color: #B5B5B5;
+  text-align: center;
+  background: transparent;
+  font-weight: 600;
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn.active .icon-box{
+
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn .icon-box:before{
+  position: absolute;
+  content: '+';
+  text-align: center;
+  width: 16px;
+  height: 16px;
+  line-height: 10px;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+}
+
+.shop-sidebar .category-widget .accordion .acc-btn.active .icon-box:before{
+  content: '-';
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 3px;
+}
+
+.shop-sidebar .category-widget .accordion .acc-content{
+  padding-left: 27px;
+  margin-bottom: 10px;
+}
+
+.shop-sidebar .color-widget .color-list{
+  display: block;
+}
+
+.shop-sidebar .color-widget .color-list li{
+  position: relative;
+  display: inline-block;
+  float: left;
+}
+
+.shop-sidebar .color-widget .color-list li .check-box label{
+  padding: 0px;
+}
+
+.shop-sidebar .color-widget .color-list li .check-box label:before,
+.shop-sidebar .color-widget .color-list li .check-box label:after{
+  top: 0px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+}
+
+.shop-sidebar .color-widget .color-list li .check-box label:after{
+  line-height: 22px;
+}
+
+.shop-sidebar .color-widget .color-list li:first-child .check-box label:before{
+  background: #F8CD2E;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(2) .check-box label:before{
+  background: #0578FF;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(3) .check-box label:before{
+  background: #FF6B00;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(4) .check-box label:before{
+  background: #000000;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(5) .check-box label:before{
+  background: #792424;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(6) .check-box label:before{
+  background: #2EC8F8;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(7) .check-box label:before{
+  background: #FF0000;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(8) .check-box label:before{
+  background: #6100FF;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(9) .check-box label:before{
+  background: #4DB8A5;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(10) .check-box label:before{
+  background: #92DE57;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(11) .check-box label:before{
+  background: #C24444;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(12) .check-box label:before{
+  background: #B72EF8;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(13) .check-box label:before{
+  background: #063F83;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(14) .check-box label:before{
+  background: #FFA96A;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(15) .check-box label:before{
+  background: #EDEDED;
+}
+
+.shop-sidebar .color-widget .color-list li:nth-child(16) .check-box label:before{
+  background: #fff;
+  border: 1px solid #E1E1E1;
+}
+
+.shop-sidebar .review-widget .category-list li label i{
+  font-size: 16px;
+  margin-right: 7px;
+  color: #FFC844;
+}
+
+.shop-sidebar .review-widget .category-list li label i.light{
+  color: #D3D3D3;
+}
+
+
+/** rtl-css **/
+
+.rtl .shop-sidebar .check-box label{
+  padding-left: 0px;
+}
+
+.rtl .shop-sidebar .check-box label:after{
+  left: inherit;
+  right: 0px;
+}
+
+.rtl .shop-sidebar .category-widget .accordion .acc-btn:before{
+  left: inherit;
+  right: 0px;
+}
+
+.rtl .shop-sidebar .category-widget .accordion .acc-btn .icon-box{
+  right: inherit;
+  left: 0px;
+}
+
+.rtl .shop-sidebar .color-widget .color-list li{
+  float: right;
+}
+
+/** responsive-css **/
+
+@media only screen and (max-width: 1200px){
+  
+}
+
+@media only screen and (max-width: 991px){
+  
+}
+
+@media only screen and (max-width: 767px){
+
+}
+
+@media only screen and (max-width: 599px){
+
+}
+
+@media only screen and (max-width: 499px){
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

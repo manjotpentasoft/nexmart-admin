@@ -1,0 +1,278 @@
+.pv-root {
+  font-family: "Montserrat", Arial, sans-serif;
+  color: #181818;
+  padding: 0 0 40px 0;
+}
+.pv-breadcrumbs {
+  font-size: 15px;
+  color: #4a4c50;
+  margin: 25px 0 20px 54px;
+  letter-spacing: 0.04em;
+}
+.pv-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 44px;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding-left: 12px;
+}
+.pv-gallery {
+  display: flex;
+  flex-direction: row;
+  gap: 22px;
+  align-items: flex-start;
+}
+.pv-thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.pv-thumb {
+  width: 68px;
+  height: 69px;
+  object-fit: cover;
+  border: 2.5px solid #eee;
+  background: #fafbfb;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+.pv-thumb.selected {
+  border: 2.5px solid #1147a2;
+}
+.pv-img-box {
+  background: #fff;
+  width: 360px;
+  height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pv-main-img-large {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  object-fit: contain;
+}
+
+.pv-details {
+  flex: 1;
+  padding: 8px 0 0 0;
+}
+.pv-cat {
+  font-size: 16px;
+  color: #181818;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.pv-title {
+  font-weight: 800;
+  font-size: 2.05rem;
+  line-height: 1.13;
+  margin: 0 0 16px 0;
+}
+.pv-price {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #d81e06;
+  margin: 5px 0 10px 0;
+}
+.pv-prev-price {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #666;
+  margin: 5px 0 10px 15px;
+  text-decoration: line-through;
+}
+.pv-rating {
+  font-size: 19px;
+  color: #f4bf18;
+  margin-bottom: 17px;
+}
+.pv-star {
+  color: #ddd;
+  font-size: 22px;
+  margin-right: 1px;
+}
+.pv-star.filled {
+  color: #f4bf18;
+}
+.pv-reviews {
+  font-size: 15px;
+  color: #57585a;
+  font-weight: 500;
+  margin-left: 8px;
+}
+.pv-desc {
+  font-size: 1.05rem;
+  color: #212325;
+  line-height: 1.65;
+  margin: 18px 0 22px 0;
+}
+.pv-meta {
+  margin-top: 10px;
+  margin-bottom: 13px;
+}
+.pv-meta div {
+  font-size: 1rem;
+  margin-bottom: 7px;
+}
+.pv-stock {
+  color: #28aa1a;
+  font-weight: 600;
+}
+.pv-colors {
+  margin-top: 17px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1.05rem;
+}
+.pv-color-dot {
+  width: 22px;
+  height: 22px;
+  margin-left: 3.3px;
+  border-radius: 50%;
+  border: 2.5px solid #e0e0e0;
+  display: inline-block;
+  cursor: pointer;
+}
+.pv-loading {
+  font-size: 1.2rem;
+  color: #777;
+  padding: 40px;
+}
+
+.pv-colors .pv-color-dot {
+  transition: border 0.2s;
+}
+.pv-color-dot.selected {
+  border: 2.5px solid #1147a2;
+}
+
+.pv-sizes {
+  margin-top: 18px;
+}
+.pv-size-btn {
+  border: 1.5px solid #e5e5e5;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 15px;
+  margin: 0 11px 0 0;
+  padding: 5px 14px;
+  cursor: pointer;
+}
+.pv-size-btn.selected {
+  border: 2px solid #1147a2;
+  background: #eaf4ff;
+  color: #1147a2;
+}
+
+.pv-cart-row {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.pv-qty-btn {
+  border: 1px solid #e4e4e4;
+  background: #f9f9fa;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 22px;
+  cursor: pointer;
+}
+.pv-qty-label {
+  font-size: 18px;
+}
+.pv-add-btn {
+  background: #1147a2;
+  color: #fff;
+  border-radius: 22px;
+  padding: 10px 26px;
+  font-weight: 600;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 5px;
+  margin-right: 5px;
+}
+.pv-wishlist-btn {
+  font-size: 25px;
+  cursor: pointer;
+  margin-bottom: 7px;
+}
+.pv-section {
+  margin: 44px 0 0 76px;
+  max-width: 1000px;
+}
+.pv-section h2 {
+  font-weight: 700;
+  font-size: 1.23rem;
+  margin-bottom: 17px;
+}
+.pv-long-desc {
+  margin-bottom: 12px;
+  color: #222;
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+.pv-features {
+  margin: 0 0 18px 0;
+  font-size: 1rem;
+  color: #232323;
+}
+.pv-features li {
+  margin-bottom: 7px;
+}
+.pv-spec-table {
+  width: 82%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 1rem;
+  margin-top: 7px;
+  margin-bottom: 30px;
+}
+.pv-spec-table td {
+  border: 1px solid #e6e8ea;
+  padding: 12px 18px;
+  color: #222;
+}
+.pv-seller-row {
+  margin-top: 19px;
+  font-size: 15px;
+  color: #535456;
+}
+.pv-tags {
+  margin-top: 5px;
+}
+.pv-social-icons {
+  font-size: 18px;
+  margin-right: 8px;
+}
+.pv-qty-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0 5px;
+  transition: 0.2s;
+}
+
+.pv-qty-btn:hover {
+  background: #f0f0f0;
+}
+
+.pv-plus {
+  color: green;
+}
+
+.pv-minus {
+  color: red;
+}

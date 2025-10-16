@@ -18,6 +18,6 @@ export default function PublicRoute({ children }) {
 
   if (loading) return <div className="loader"></div>;
 
-  // If user is logged in, redirect to dashboard
-  return user ? <Navigate to="/dashboard" /> : children;
+  // If user is logged in, redirect to home page
+  return user ? <Navigate to="/" /> : children;
 }

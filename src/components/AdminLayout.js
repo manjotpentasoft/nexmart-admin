@@ -37,15 +37,15 @@ const styles = {
   },
   main: (isSidebarOpen) => ({
     flex: 1,
-    display: "flex",
-    flexDirection: "column",
     marginLeft: isSidebarOpen ? "240px" : "0",
-    transition: "margin-left 0.3s ease",
+    backgroundColor: "#f9fafb",
+    minHeight: "100vh",
+    overflowX: "hidden",
   }),
   content: {
     flex: 1,
     padding: "20px",
-    marginTop: "56px", 
+    marginTop: "56px",
     boxSizing: "border-box",
   },
   navbar: {
@@ -73,7 +73,7 @@ const styles = {
     boxShadow: "2px 0 16px rgba(44, 62, 80, 0.08)",
     borderBottomRightRadius: "20px",
     position: "fixed",
-    top: "56px", 
+    top: "56px",
     left: 0,
     zIndex: 1100,
     transition: "transform 0.3s ease, width 0.3s ease",

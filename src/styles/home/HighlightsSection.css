@@ -1,0 +1,122 @@
+.highlights-section {
+  position: relative;
+  padding: 0 20px;
+  background: #003eab; 
+  /* margin-top: 30px; */
+}
+
+.highlights-section .inner-container {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.highlights-section .shape {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.05;
+  z-index: 0;
+}
+
+.highlights-block-one {
+  flex: 1 1 18%; /* 5 items per row on desktop */
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  z-index: 1;
+}
+
+.inner-box {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 20px;
+  width: 100%;
+}
+
+.icon-box {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  background: #003085;
+  color: #f5b020;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: all 0.3s ease;
+}
+
+.inner-box:hover .icon-box {
+  background: #f5b020;
+  color: #003085;
+}
+
+.inner-box h5 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
+  margin: 0;
+}
+
+/* Responsive Layouts */
+@media only screen and (max-width: 1200px) {
+  .highlights-block-one {
+    flex: 1 1 22%;
+  }
+}
+
+@media only screen and (max-width: 991px) {
+  .highlights-block-one {
+    flex: 1 1 30%;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .highlights-block-one {
+    flex: 1 1 45%;
+  }
+}
+
+@media only screen and (max-width: 599px) {
+  .highlights-block-one {
+    flex: 1 1 100%;
+  }
+  .inner-container {
+    padding: 20px 15px;
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+/* Extra Mobile Improvements */
+@media only screen and (max-width: 400px) {
+  .inner-box {
+    padding: 12px 15px;
+    gap: 10px;
+  }
+
+  .icon-box {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+
+  .inner-box h5 {
+    font-size: 14px;
+  }
+}

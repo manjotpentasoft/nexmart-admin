@@ -1,27 +1,20 @@
 import React, { useState, useEffect } from "react";
-import AdminSidebar from "../../../components/AdminSidebar";
-import {
-  FaAngleDown,
-  FaAngleUp,
-  FaEdit,
-  FaTrash,
-  FaPlus,
-} from "react-icons/fa";
-import { useSidebar } from "../../../contexts/SidebarContext";
-import {
-  collection,
-  doc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../../firebase/firebaseConfig";
-import "./CategoriesPage.css";
+import { FaAngleDown, FaAngleUp, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import AdminLayout from "../../../components/AdminLayout";
+import "./CategoriesPage.css";
+import {
+  subscribeToCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory,
+  toggleCategoryStatus,
+  subscribeToSubcategories,
+  addSubcategory,
+  updateSubcategory,
+  deleteSubcategory,
+  toggleSubcategoryStatus,
+} from "../../../firebase/categoriesService";
+import { fileToBase64 } from "../../../firebase/firestoreService";
 
 function CategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -37,41 +30,26 @@ function CategoriesPage() {
   const [categoryImagePreview, setCategoryImagePreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [entriesToShow, setEntriesToShow] = useState(10);
-  const { isSidebarOpen } = useSidebar();
 
+  // Load categories in real-time
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const categoriesRef = collection(db, "categories");
-        const q = query(categoriesRef, orderBy("name"));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const categoriesData = [];
-          querySnapshot.forEach((doc) => {
-            categoriesData.push({ id: doc.id, ...doc.data() });
-          });
-          setCategories(categoriesData);
-          setFilteredCategories(categoriesData);
-          setLoading(false);
-        });
-        return () => unsubscribe();
-      } catch (error) {
-        console.error("Error fetching categories: ", error);
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
+    const unsubscribe = subscribeToCategories((data) => {
+      setCategories(data);
+      setFilteredCategories(data);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
+  // Search filter
   useEffect(() => {
-    if (searchTerm.trim() === "") {
+    if (!searchTerm.trim()) {
       setFilteredCategories(categories);
     } else {
       const term = searchTerm.trim().toLowerCase();
-      const filtered = categories.filter((category) =>
-        category.name.toLowerCase().includes(term)
+      setFilteredCategories(
+        categories.filter((c) => c.name.toLowerCase().includes(term))
       );
-      setFilteredCategories(filtered);
     }
   }, [searchTerm, categories]);
 
@@ -81,137 +59,95 @@ function CategoriesPage() {
     );
   };
 
-  const addCategory = async () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-
     try {
-      const categoriesRef = collection(db, "categories");
-      await addDoc(categoriesRef, {
+      await addCategory({
         name: newCategoryName,
         status: newCategoryStatus,
         image: categoryImage || "",
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
-
       setNewCategoryName("");
       setNewCategoryStatus("enabled");
       setCategoryImage("");
       setCategoryImagePreview("");
       setShowAddModal(false);
     } catch (error) {
-      console.error("Error adding category: ", error);
+      console.error("Error adding category:", error);
     }
   };
 
-  const editCategory = async () => {
-    if (!newCategoryName.trim() || !editingCategory) return;
-
+  const handleEditCategory = async () => {
+    if (!editingCategory || !newCategoryName.trim()) return;
     try {
-      const categoryRef = doc(db, "categories", editingCategory.id);
-      await updateDoc(categoryRef, {
+      await updateCategory(editingCategory.id, {
         name: newCategoryName,
         status: newCategoryStatus,
         image: categoryImage || editingCategory.image || "",
-        updatedAt: new Date(),
       });
-
+      setEditingCategory(null);
       setNewCategoryName("");
       setNewCategoryStatus("enabled");
       setCategoryImage("");
       setCategoryImagePreview("");
-      setEditingCategory(null);
       setShowEditModal(false);
     } catch (error) {
-      console.error("Error updating category: ", error);
+      console.error("Error updating category:", error);
     }
   };
 
-  const deleteCategory = async (category) => {
+  const handleDeleteCategory = async (category) => {
     if (
       window.confirm(
         "Are you sure you want to delete this category? All subcategories will also be deleted."
       )
     ) {
       try {
-        const subcategoriesRef = collection(
-          db,
-          "categories",
-          category.id,
-          "subcategories"
-        );
-        const subcategoriesSnapshot = await getDocs(subcategoriesRef);
-
-        for (const subDoc of subcategoriesSnapshot.docs) {
-          await deleteDoc(
-            doc(db, "categories", category.id, "subcategories", subDoc.id)
-          );
-        }
-
-        await deleteDoc(doc(db, "categories", category.id));
+        await deleteCategory(category.id);
       } catch (error) {
-        console.error("Error deleting category: ", error);
+        console.error("Error deleting category:", error);
       }
     }
   };
 
   const toggleStatus = async (category) => {
     try {
-      const categoryRef = doc(db, "categories", category.id);
-      await updateDoc(categoryRef, {
-        status: category.status === "enabled" ? "disabled" : "enabled",
-        updatedAt: new Date(),
-      });
+      await toggleCategoryStatus(category);
     } catch (error) {
-      console.error("Error toggling category status: ", error);
+      console.error("Error toggling status:", error);
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result;
-        setCategoryImage(imageUrl);
-        setCategoryImagePreview(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      const base64 = await fileToBase64(file);
+      setCategoryImage(base64);
+      setCategoryImagePreview(base64);
     }
   };
 
   if (loading) {
     return (
-      <div className="admin-dashboard-layout">
-        <AdminSidebar />
-        <main
-          className={`admin-dashboard-main ${
-            !isSidebarOpen ? "sidebar-closed" : ""
-          }`}
-        >
-          <div className="categories-header">
-            <div>
-              <h1>Categories</h1>
-              <p>Manage categories and subcategories here.</p>
-            </div>
-          </div>
-          <div className="categories-table-section">
-            <p>Loading categories...</p>
-          </div>
-        </main>
-      </div>
+      <AdminLayout>
+        <div className="categories-header">
+          <h1>Categories</h1>
+          <p>Manage categories and subcategories here.</p>
+        </div>
+        <div className="categories-table-section">
+          <div className="loader"></div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
     <AdminLayout>
-        <div className="categories-header">
-          <div>
-            <h1>Categories</h1>
-            <p>Manage categories and subcategories here.</p>
-          </div>
+      <div className="categories-header">
+        <div>
+          <h1>Categories</h1>
+          <p>Manage categories and subcategories here.</p>
         </div>
-
         <div className="categories-controls">
           <div className="search-container">
             <input
@@ -221,228 +157,160 @@ function CategoriesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button
-            className="add-category-btn"
-            onClick={() => setShowAddModal(true)}
-          >
+          <button className="add-category-btn" onClick={() => setShowAddModal(true)}>
             <FaPlus style={{ marginRight: "8px" }} />
             Add Category
           </button>
         </div>
+      </div>
 
-        <div className="categories-table-section">
-          <div className="table-info">
-            <span>Show</span>
-            <select
-              value={entriesToShow}
-              onChange={(e) => setEntriesToShow(parseInt(e.target.value))}
-            >
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-            <span>entries</span>
-          </div>
-
-          {filteredCategories.length > 0 ? (
-            <table className="categories-table">
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCategories.slice(0, entriesToShow).map((category) => (
-                  <React.Fragment key={category.id}>
-                    <tr>
-                      <td>
-                        <div
+      <div className="categories-table-section">
+        {filteredCategories.length ? (
+          <table className="categories-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCategories.slice(0, entriesToShow).map((category) => (
+                <React.Fragment key={category.id}>
+                  <tr>
+                    <td>
+                      {category.image ? (
+                        <img
+                          src={category.image}
+                          alt={category.name}
                           className="category-icon"
-                          style={{
-                            backgroundColor: "none",
-                          }}
-                        >
-                          {category.image ? (
-                            <img
-                              src={category.image}
-                              alt={category.name}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "8px",
-                              }}
-                            />
-                          ) : (
-                            category.name.charAt(0).toUpperCase()
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="category-info">
-                          <h3>{category.name}</h3>
-                        </div>
-                      </td>
-                      <td>
-                        <span
-                          className={`status ${category.status || "enabled"}`}
-                          onClick={() => toggleStatus(category)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          {category.status || "enabled"} ▼
-                        </span>
-                      </td>
-                      <td>
-                        <div className="category-actions">
-                          <button
-                            className="action-btn edit"
-                            onClick={() => {
-                              setEditingCategory(category);
-                              setNewCategoryName(category.name);
-                              setNewCategoryStatus(
-                                category.status || "enabled"
-                              );
-                              setCategoryImagePreview(category.image || "");
-                              setShowEditModal(true);
-                            }}
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            className="action-btn delete"
-                            onClick={() => deleteCategory(category)}
-                          >
-                            <FaTrash />
-                          </button>
-                          <button
-                            className="action-btn expand"
-                            onClick={() => toggleExpand(category.id)}
-                          >
-                            {expandedIds.includes(category.id) ? (
-                              <FaAngleUp />
-                            ) : (
-                              <FaAngleDown />
-                            )}
-                          </button>
-                        </div>
+                        />
+                      ) : (
+                        <div className="category-icon">{category.name.charAt(0)}</div>
+                      )}
+                    </td>
+                    <td>{category.name}</td>
+                    <td>
+                      <span
+                        className={`status ${category.status}`}
+                        onClick={() => toggleStatus(category)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {category.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="action-btn edit"
+                        onClick={() => {
+                          setEditingCategory(category);
+                          setNewCategoryName(category.name);
+                          setNewCategoryStatus(category.status || "enabled");
+                          setCategoryImagePreview(category.image || "");
+                          setShowEditModal(true);
+                        }}
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="action-btn delete"
+                        onClick={() => handleDeleteCategory(category)}
+                      >
+                        <FaTrash />
+                      </button>
+                      <button
+                        className="action-btn expand"
+                        onClick={() => toggleExpand(category.id)}
+                      >
+                        {expandedIds.includes(category.id) ? <FaAngleUp /> : <FaAngleDown />}
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedIds.includes(category.id) && (
+                    <tr className="subcategory-section">
+                      <td colSpan="4">
+                        <SubcategoriesList
+                          categoryId={category.id}
+                          categoryName={category.name}
+                        />
                       </td>
                     </tr>
-                    {expandedIds.includes(category.id) && (
-                      <tr className="subcategory-section">
-                        <td colSpan="4">
-                          <SubcategoriesList
-                            categoryId={category.id}
-                            categoryName={category.name}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="no-results">
-              <p>No categories found.</p>
-            </div>
-          )}
-        </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>No categories found.</p>
+        )}
+      </div>
 
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Add New Category</h3>
-            <div className="form-group">
-              <label>Category Name:</label>
-              <input
-                type="text"
-                placeholder="Category name"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Status:</label>
-              <select
-                value={newCategoryStatus}
-                onChange={(e) => setNewCategoryStatus(e.target.value)}
-              >
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Image:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              {categoryImagePreview && (
-                <div className="image-preview">
-                  <img src={categoryImagePreview} alt="Preview" />
-                </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button onClick={addCategory} disabled={!newCategoryName.trim()}>
-                Add Category
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal
+          title="Add New Category"
+          name={newCategoryName}
+          setName={setNewCategoryName}
+          status={newCategoryStatus}
+          setStatus={setNewCategoryStatus}
+          imagePreview={categoryImagePreview}
+          onImageChange={handleImageChange}
+          onSubmit={handleAddCategory}
+          onClose={() => setShowAddModal(false)}
+        />
       )}
 
       {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit Category</h3>
-            <div className="form-group">
-              <label>Category Name:</label>
-              <input
-                type="text"
-                placeholder="Category name"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Status:</label>
-              <select
-                value={newCategoryStatus}
-                onChange={(e) => setNewCategoryStatus(e.target.value)}
-              >
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Image:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              {categoryImagePreview && (
-                <div className="image-preview">
-                  <img src={categoryImagePreview} alt="Preview" />
-                </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button onClick={editCategory} disabled={!newCategoryName.trim()}>
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal
+          title="Edit Category"
+          name={newCategoryName}
+          setName={setNewCategoryName}
+          status={newCategoryStatus}
+          setStatus={setNewCategoryStatus}
+          imagePreview={categoryImagePreview}
+          onImageChange={handleImageChange}
+          onSubmit={handleEditCategory}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
-      </AdminLayout>
+    </AdminLayout>
+  );
+}
+
+// Modal component remains the same
+function Modal({ title, name, setName, status, setStatus, imagePreview, onImageChange, onSubmit, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h3>{title}</h3>
+        <div className="form-group">
+          <label>Name:</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Status:</label>
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Image:</label>
+          <input type="file" accept="image/*" onChange={onImageChange} />
+          {imagePreview && (
+            <div className="image-preview">
+              <img src={imagePreview} alt="Preview" />
+            </div>
+          )}
+        </div>
+        <div className="modal-actions">
+          <button onClick={onClose}>Cancel</button>
+          <button onClick={onSubmit} disabled={!name.trim()}>
+            {title.includes("Add") ? "Add" : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -455,128 +323,56 @@ function SubcategoriesList({ categoryId, categoryName }) {
   const [newSubcategoryStatus, setNewSubcategoryStatus] = useState("enabled");
   const [subcategoryImagePreview, setSubcategoryImagePreview] = useState("");
 
+  // Load subcategories in real-time
   useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        const subcategoriesRef = collection(
-          db,
-          "categories",
-          categoryId,
-          "subcategories"
-        );
-        const q = query(subcategoriesRef, orderBy("name"));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const subcategoriesData = [];
-          querySnapshot.forEach((doc) => {
-            subcategoriesData.push({ id: doc.id, ...doc.data() });
-          });
-          setSubcategories(subcategoriesData);
-        });
-
-        return () => unsubscribe();
-      } catch (error) {
-        console.error("Error fetching subcategories: ", error);
-      }
-    };
-
-    fetchSubcategories();
+    const unsubscribe = subscribeToSubcategories(categoryId, (data) => {
+      setSubcategories(data);
+    });
+    return () => unsubscribe();
   }, [categoryId]);
 
-  const addSubcategory = async () => {
+  const handleAdd = async () => {
     if (!newSubcategoryName.trim()) return;
-
-    try {
-      const subcategoriesRef = collection(
-        db,
-        "categories",
-        categoryId,
-        "subcategories"
-      );
-      await addDoc(subcategoriesRef, {
-        name: newSubcategoryName,
-        status: newSubcategoryStatus,
-        image: subcategoryImagePreview || "",
-        categoryId: categoryId,
-        categoryName: categoryName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      setNewSubcategoryName("");
-      setNewSubcategoryStatus("enabled");
-      setSubcategoryImagePreview("");
-      setShowAddModal(false);
-    } catch (error) {
-      console.error("Error adding subcategory: ", error);
-    }
+    await addSubcategory(categoryId, {
+      name: newSubcategoryName,
+      status: newSubcategoryStatus,
+      image: subcategoryImagePreview || "",
+    });
+    setNewSubcategoryName("");
+    setNewSubcategoryStatus("enabled");
+    setSubcategoryImagePreview("");
+    setShowAddModal(false);
   };
 
-  const editSubcategory = async () => {
-    if (!newSubcategoryName.trim() || !editingSubcategory) return;
-
-    try {
-      const subcategoryRef = doc(
-        db,
-        "categories",
-        categoryId,
-        "subcategories",
-        editingSubcategory.id
-      );
-      await updateDoc(subcategoryRef, {
-        name: newSubcategoryName,
-        status: newSubcategoryStatus,
-        image: subcategoryImagePreview || editingSubcategory.image || "",
-        updatedAt: new Date(),
-      });
-
-      setNewSubcategoryName("");
-      setNewSubcategoryStatus("enabled");
-      setSubcategoryImagePreview("");
-      setEditingSubcategory(null);
-      setShowEditModal(false);
-    } catch (error) {
-      console.error("Error updating subcategory: ", error);
-    }
+  const handleEdit = async () => {
+    if (!editingSubcategory || !newSubcategoryName.trim()) return;
+    await updateSubcategory(categoryId, editingSubcategory.id, {
+      name: newSubcategoryName,
+      status: newSubcategoryStatus,
+      image: subcategoryImagePreview || editingSubcategory.image || "",
+    });
+    setEditingSubcategory(null);
+    setNewSubcategoryName("");
+    setNewSubcategoryStatus("enabled");
+    setSubcategoryImagePreview("");
+    setShowEditModal(false);
   };
 
-  const deleteSubcategory = async (subcategory) => {
+  const handleDelete = async (subcategory) => {
     if (window.confirm("Are you sure you want to delete this subcategory?")) {
-      try {
-        await deleteDoc(
-          doc(db, "categories", categoryId, "subcategories", subcategory.id)
-        );
-      } catch (error) {
-        console.error("Error deleting subcategory: ", error);
-      }
+      await deleteSubcategory(categoryId, subcategory.id);
     }
   };
 
   const toggleStatus = async (subcategory) => {
-    try {
-      const subcategoryRef = doc(
-        db,
-        "categories",
-        categoryId,
-        "subcategories",
-        subcategory.id
-      );
-      await updateDoc(subcategoryRef, {
-        status: subcategory.status === "enabled" ? "disabled" : "enabled",
-        updatedAt: new Date(),
-      });
-    } catch (error) {
-      console.error("Error toggling subcategory status: ", error);
-    }
+    await toggleSubcategoryStatus(categoryId, subcategory);
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSubcategoryImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      const base64 = await fileToBase64(file);
+      setSubcategoryImagePreview(base64);
     }
   };
 
@@ -584,192 +380,92 @@ function SubcategoriesList({ categoryId, categoryName }) {
     <>
       <div className="subcategory-header">
         <h4>Subcategories for {categoryName}</h4>
-        <button
-          className="add-subcategory-btn"
-          onClick={() => setShowAddModal(true)}
-        >
+        <button className="add-subcategory-btn" onClick={() => setShowAddModal(true)}>
           <FaPlus style={{ marginRight: "8px" }} />
           Add Subcategory
         </button>
       </div>
-      <div className="subcategory-list">
-        {subcategories.length > 0 ? (
-          <table className="categories-table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Actions</th>
+      {subcategories.length ? (
+        <table className="categories-table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subcategories.map((sub) => (
+              <tr key={sub.id}>
+                <td>
+                  {sub.image ? (
+                    <img src={sub.image} alt={sub.name} className="category-icon" />
+                  ) : (
+                    <div className="category-icon">{sub.name.charAt(0)}</div>
+                  )}
+                </td>
+                <td>{sub.name}</td>
+                <td>
+                  <span
+                    className={`status ${sub.status || "enabled"}`}
+                    onClick={() => toggleStatus(sub)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {sub.status || "enabled"}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    className="action-btn edit"
+                    onClick={() => {
+                      setEditingSubcategory(sub);
+                      setNewSubcategoryName(sub.name);
+                      setNewSubcategoryStatus(sub.status || "enabled");
+                      setSubcategoryImagePreview(sub.image || "");
+                      setShowEditModal(true);
+                    }}
+                  >
+                    <FaEdit />
+                  </button>
+                  <button className="action-btn delete" onClick={() => handleDelete(sub)}>
+                    <FaTrash />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {subcategories.map((subcategory) => (
-                <tr key={subcategory.id}>
-                  <td>
-                    <div
-                      className="category-icon"
-                      style={{ backgroundColor: "none" }}
-                    >
-                      {subcategory.image ? (
-                        <img
-                          src={subcategory.image}
-                          alt={subcategory.name}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: "8px",
-                          }}
-                        />
-                      ) : (
-                        subcategory.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="category-info">
-                      <h3>{subcategory.name}</h3>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      className={`status ${subcategory.status || "enabled"}`}
-                      onClick={() => toggleStatus(subcategory)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {subcategory.status || "enabled"} ▼
-                    </span>
-                  </td>
-                  <td>
-                    <div className="category-actions">
-                      <button
-                        className="action-btn edit"
-                        onClick={() => {
-                          setEditingSubcategory(subcategory);
-                          setNewSubcategoryName(subcategory.name);
-                          setNewSubcategoryStatus(
-                            subcategory.status || "enabled"
-                          );
-                          setSubcategoryImagePreview(subcategory.image || "");
-                          setShowEditModal(true);
-                        }}
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        className="action-btn delete"
-                        onClick={() => deleteSubcategory(subcategory)}
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="no-subcategories">
-            No subcategories found. Click "Add Subcategory" to create one.
-          </div>
-        )}
-      </div>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>No subcategories found. Click "Add Subcategory" to create one.</p>
+      )}
+
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Add New Subcategory</h3>
-            <div className="form-group">
-              <label>Subcategory Name:</label>
-              <input
-                type="text"
-                placeholder="Subcategory name"
-                value={newSubcategoryName}
-                onChange={(e) => setNewSubcategoryName(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Status:</label>
-              <select
-                value={newSubcategoryStatus}
-                onChange={(e) => setNewSubcategoryStatus(e.target.value)}
-              >
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Image:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              {subcategoryImagePreview && (
-                <div className="image-preview">
-                  <img src={subcategoryImagePreview} alt="Preview" />
-                </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button
-                onClick={addSubcategory}
-                disabled={!newSubcategoryName.trim()}
-              >
-                Add Subcategory
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal
+          title="Add New Subcategory"
+          name={newSubcategoryName}
+          setName={setNewSubcategoryName}
+          status={newSubcategoryStatus}
+          setStatus={setNewSubcategoryStatus}
+          imagePreview={subcategoryImagePreview}
+          onImageChange={handleImageChange}
+          onSubmit={handleAdd}
+          onClose={() => setShowAddModal(false)}
+        />
       )}
       {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit Subcategory</h3>
-            <div className="form-group">
-              <label>Subcategory Name:</label>
-              <input
-                type="text"
-                placeholder="Subcategory name"
-                value={newSubcategoryName}
-                onChange={(e) => setNewSubcategoryName(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Status:</label>
-              <select
-                value={newSubcategoryStatus}
-                onChange={(e) => setNewSubcategoryStatus(e.target.value)}
-              >
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Image:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              {subcategoryImagePreview && (
-                <div className="image-preview">
-                  <img src={subcategoryImagePreview} alt="Preview" />
-                </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button
-                onClick={editSubcategory}
-                disabled={!newSubcategoryName.trim()}
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}{" "}
+        <Modal
+          title="Edit Subcategory"
+          name={newSubcategoryName}
+          setName={setNewSubcategoryName}
+          status={newSubcategoryStatus}
+          setStatus={setNewSubcategoryStatus}
+          imagePreview={subcategoryImagePreview}
+          onImageChange={handleImageChange}
+          onSubmit={handleEdit}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </>
   );
 }

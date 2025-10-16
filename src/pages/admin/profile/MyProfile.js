@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./ProfilePage.css";
-import { useSidebar } from "../../../contexts/SidebarContext";
 import AdminLayout from "../../../components/AdminLayout";
 import { FaCamera, FaUserCircle } from "react-icons/fa";
 import { db, auth } from "../../../firebase/firebaseConfig";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 export default function ProfilePage() {
-  const { isSidebarOpen } = useSidebar();
   const fileInputRef = useRef(null);
 
   // state

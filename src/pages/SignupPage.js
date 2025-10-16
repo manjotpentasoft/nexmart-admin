@@ -22,7 +22,6 @@ function Signup() {
     setLoading(true);
     try {
       const user = await register(email, password, name);
-      toast.success("Signup successful!");
       navigate("/dashboard");
     } catch (error) {
       console.error(error);

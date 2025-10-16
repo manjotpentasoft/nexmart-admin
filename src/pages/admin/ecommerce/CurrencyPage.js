@@ -105,15 +105,15 @@ const CurrencyPage = () => {
   };
 
   // Toggle enable/disable
-  const handleToggleStatus = async (currency, newStatus) => {
-    const ref = doc(db, "currencies", currency.id);
-    await updateDoc(ref, { status: newStatus });
-    setCurrencies(
-      currencies.map((c) =>
-        c.id === currency.id ? { ...c, status: newStatus } : c
-      )
-    );
-  };
+  // const handleToggleStatus = async (currency, newStatus) => {
+  //   const ref = doc(db, "currencies", currency.id);
+  //   await updateDoc(ref, { status: newStatus });
+  //   setCurrencies(
+  //     currencies.map((c) =>
+  //       c.id === currency.id ? { ...c, status: newStatus } : c
+  //     )
+  //   );
+  // };
 
   // Open Add Modal
   const openAddModal = () => {

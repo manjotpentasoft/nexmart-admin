@@ -1,22 +1,20 @@
 .admin-dashboard-sidebar {
+  position: fixed;
+  top: 56px; /* height of navbar */
+  left: 0;
+  bottom: 0; /* makes it reach the very bottom */
   width: 240px;
-  min-height: 100vh;
   background: linear-gradient(to bottom, #27bda0 0%, #27b397 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   padding: 24px 0;
-  box-shadow: 2px 0 16px rgba(44, 62, 80, 0.08);
   border-bottom-right-radius: 20px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1100;
-  transition: width 0.3s, transform 0.3s;
-  font-size: 0.95rem;
   overflow-y: auto;
-  scroll-behavior: smooth;
-  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+  z-index: 1100;
 }
 
 .sidebar-profile {
@@ -52,8 +50,9 @@
   margin: 0;
 }
 
+/* Sidebar Menu Items */
 .admin-dashboard-sidebar nav ul li {
-  padding: 10px 18px; 
+  padding: 10px 18px;
   font-size: 0.95rem;
   display: flex;
   align-items: center;
@@ -69,6 +68,13 @@
 .admin-dashboard-sidebar nav ul li.active {
   background: rgba(255, 255, 255, 0.15);
   transform: translateX(2px);
+}
+
+/* Dropdown Menu */
+.admin-dashboard-sidebar nav ul li ul {
+  list-style: none;
+  padding-left: 26px;
+  margin: 6px 0;
 }
 
 .admin-dashboard-sidebar nav ul li a,
@@ -130,64 +136,23 @@
   justify-content: space-between;
 }
 
-@media (max-width: 900px) {
-  .admin-dashboard-sidebar {
-    width: 64px;
-    padding: 12px 0;
-  }
-
-  .admin-dashboard-sidebar nav ul li {
-    justify-content: center;
-    padding: 10px;
-  }
-
-  .admin-dashboard-sidebar nav ul li span,
-  .admin-dashboard-sidebar nav ul li a {
-    justify-content: center;
-    gap: 0;
-  }
-
-  .admin-dashboard-sidebar nav ul li ul {
-    padding-left: 20px;
-  }
-}
-
-@media (max-width: 600px) {
-  .admin-dashboard-sidebar {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    padding: 6px;
-    border-radius: 0;
-  }
-
-  .admin-dashboard-sidebar nav ul {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .admin-dashboard-sidebar nav ul li {
-    flex: 1 1 45%;
-    padding: 8px;
-    justify-content: center;
-  }
-}
-
+/* Responsive for Tablets & Mobiles */
 @media (max-width: 900px) {
   .admin-dashboard-sidebar {
     transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-    position: fixed;
-    top: 56px;
-    left: 0;
-    height: calc(100% - 56px);
   }
 
   .admin-dashboard-sidebar.open {
     transform: translateX(0);
   }
+}
 
-  .admin-dashboard-sidebar.closed {
+@media (max-width: 600px) {
+  .admin-dashboard-sidebar {
     transform: translateX(-100%);
+  }
+
+  .admin-dashboard-sidebar.open {
+    transform: translateX(0);
   }
 }

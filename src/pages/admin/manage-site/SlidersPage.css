@@ -123,7 +123,7 @@
   background: linear-gradient(135deg, #27bda0 0%, #4299e1 100%);
   color: white;
   font-weight: 600;
-  padding: 8px 14px;
+  padding: 9px 14px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
@@ -131,6 +131,7 @@
   align-items: center;
   gap: 6px;
   transition: all 0.3s ease;
+  margin-top: 10px;
 }
 
 .slider-add-btn:hover {

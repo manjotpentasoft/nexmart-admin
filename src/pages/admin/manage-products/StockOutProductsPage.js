@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "./StockOutProductsPage.css";
-import { 
-  // FaEdit, 
-  FaTrash } from "react-icons/fa";
-import { db } from "../../../firebase/firebaseConfig";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { FaTrash } from "react-icons/fa";
 import AdminLayout from "../../../components/AdminLayout";
+import {
+  subscribeToCollection,
+  deleteDocument,
+} from "../../../firebase/firestoreService";
 
 function StockOutProductsPage() {
   const [products, setProducts] = useState([]);
@@ -13,28 +13,23 @@ function StockOutProductsPage() {
   const [entriesToShow, setEntriesToShow] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch products
+  // 🔹 Real-time subscription
   useEffect(() => {
-    const fetchProducts = async () => {
-      const querySnapshot = await getDocs(collection(db, "products"));
-      const productsArray = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      const stockOutProducts = productsArray.filter(
+    const unsubscribe = subscribeToCollection("products", (allProducts) => {
+      const outOfStock = allProducts.filter(
         (product) => parseInt(product.stock) <= 0
       );
-      setProducts(stockOutProducts);
-    };
-    fetchProducts();
+      setProducts(outOfStock);
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Search filter
+  // 🔹 Search filter
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination
+  // 🔹 Pagination
   const totalPages = Math.ceil(filteredProducts.length / entriesToShow);
   const startIndex = (currentPage - 1) * entriesToShow;
   const paginatedProducts = filteredProducts.slice(
@@ -42,12 +37,12 @@ function StockOutProductsPage() {
     startIndex + entriesToShow
   );
 
-  // Delete product
-  const deleteProduct = async (id) => {
+  // 🔹 Delete product
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
-        await deleteDoc(doc(db, "products", id));
-        setProducts(products.filter((p) => p.id !== id));
+        await deleteDocument("products", id);
+        setProducts((prev) => prev.filter((p) => p.id !== id));
       } catch (err) {
         console.error("Error deleting product:", err);
       }
@@ -63,6 +58,7 @@ function StockOutProductsPage() {
         </div>
       </div>
 
+      {/* Controls */}
       <div className="table-controls">
         <div className="entries-selector">
           <span>Show</span>
@@ -88,6 +84,7 @@ function StockOutProductsPage() {
         </div>
       </div>
 
+      {/* Table Section */}
       <div className="stockout-table-section">
         {paginatedProducts.length > 0 ? (
           <table className="stockout-table">
@@ -98,7 +95,7 @@ function StockOutProductsPage() {
                 <th>Price</th>
                 <th>Status</th>
                 <th>Type</th>
-                <th>Item Type</th>
+                <th>Category</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -113,22 +110,20 @@ function StockOutProductsPage() {
                     />
                   </td>
                   <td>{product.name}</td>
-                  <td>${product.currentPrice ?? product.previousPrice ?? 0}</td>
                   <td>
-                    <span className="status-badge out-of-stock">Out of Stock</span>
+                    ${product.price ?? product.previousPrice ?? 0}
+                  </td>
+                  <td>
+                    <span className="status-badge out-of-stock">
+                      Out of Stock
+                    </span>
                   </td>
                   <td>{product.productType || "Standard"}</td>
                   <td>{product.category || "Standard"}</td>
                   <td>
-                    {/* <button
-                      className="action-btn edit"
-                      onClick={() => alert("Edit functionality not implemented yet")}
-                    >
-                      <FaEdit />
-                    </button> */}
                     <button
                       className="action-btn delete"
-                      onClick={() => deleteProduct(product.id)}
+                      onClick={() => handleDelete(product.id)}
                     >
                       <FaTrash color="red" />
                     </button>
@@ -144,6 +139,7 @@ function StockOutProductsPage() {
         )}
       </div>
 
+      {/* Footer */}
       <div className="table-footer">
         <div className="entries-info">
           Showing {filteredProducts.length > 0 ? startIndex + 1 : 0} to{" "}
@@ -161,11 +157,13 @@ function StockOutProductsPage() {
           </button>
 
           <span className="page-info">
-            Page {currentPage} of {totalPages}
+            Page {currentPage} of {totalPages || 1}
           </span>
 
           <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
+            }
             disabled={currentPage === totalPages || totalPages === 0}
             className="pagination-btn"
           >

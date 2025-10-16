@@ -94,7 +94,7 @@ function OrderInvoice() {
                   <p>
                     <strong>Payment Status:</strong>{" "}
                     <span
-                      className={`badge ${
+                      className={`badge ₹{
                         order.paymentStatus === "Paid" ? "badge-green" : "badge-red"
                       }`}
                     >
@@ -158,8 +158,8 @@ function OrderInvoice() {
                         <td>{item.name}</td>
                         {/* <td>{item.attribute}</td> */}
                         <td>{item.quantity}</td>
-                        <td>${item.price?.toLocaleString()}</td>
-                        <td>${calculateSubtotal(item).toLocaleString()}</td>
+                        <td>₹{item.price?.toLocaleString()}</td>
+                        <td>₹{calculateSubtotal(item).toLocaleString()}</td>
                       </tr>
                     ))
                   ) : (
@@ -171,9 +171,9 @@ function OrderInvoice() {
               </table>
 
               <div className="invoice-summary">
-                <p><strong>Tax:</strong> ${(order.tax || 0).toLocaleString()}</p>
-                <p><strong>Shipping:</strong> ${(order.shippingCost || 0).toLocaleString()}</p>
-                <h3>Total Amount: ${calculateTotal().toLocaleString()}</h3>
+                <p><strong>Tax:</strong> ₹{(order.tax || 0).toLocaleString()}</p>
+                <p><strong>Shipping:</strong> ₹{(order.shippingCost || 0).toLocaleString()}</p>
+                <h3>Total Amount: ₹{calculateTotal().toLocaleString()}</h3>
               </div>
             </div>
           </div>

@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import "./ProfilePage.css";
-import { useSidebar } from "../../../contexts/SidebarContext";
 import AdminLayout from "../../../components/AdminLayout";
 import { auth } from "../../../firebase/firebaseConfig";
 import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 
 export default function ChangePassword() {
-  const { isSidebarOpen } = useSidebar();
-
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
