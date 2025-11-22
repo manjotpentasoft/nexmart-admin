@@ -1,0 +1,461 @@
+.user-account-wrapper {
+  font-family: "Segoe UI", Arial, sans-serif;
+  min-height: 100vh;
+  padding-bottom: 50px;
+}
+
+.user-account-title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  padding: 20px 0;
+  color: #1e3a8a;
+}
+
+/* ===== Layout ===== */
+.user-account-content {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  gap: 40px;
+  padding: 0 30px;
+  align-items: flex-start;
+  flex-wrap: wrap; /* allows wrapping on smaller screens */
+}
+
+.user-account-sidebar {
+  flex: 0 0 300px; /* fixed width */
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.user-account-main {
+  flex: 1; /* take remaining space */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== Profile Box ===== */
+.profile-box {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.profile-picture {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 20px rgba(25, 92, 203, 0.15);
+  margin-bottom: 12px;
+}
+
+.profile-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #222;
+  margin-bottom: 6px;
+}
+
+.profile-email {
+  font-size: 0.92rem;
+  color: #7d7d7d;
+}
+
+/* ===== Sidebar Navigation ===== */
+.account-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.account-nav button {
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 12px 2px;
+  border-radius: 6px;
+  color: #595959;
+  cursor: pointer;
+  transition: color 0.22s ease;
+}
+
+.account-nav button:hover:not(:disabled) {
+  color: #195ccb;
+}
+
+.account-nav button.active {
+  color: #195ccb;
+  font-weight: 700;
+}
+
+.account-nav button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ===== Personal Info Tab ===== */
+.personal-info-section h3 {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 6px;
+  color: #222;
+}
+
+.subtext {
+  font-size: 0.94rem;
+  color: #555;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.info-cards {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.info-card {
+  background: #fff;
+  box-shadow: 0 10px 25px 0 rgb(43 68 158 / 7%);
+  border-radius: 10px;
+  padding: 16px 22px;
+  flex: 1 1 180px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 160px;
+  max-width: 260px;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #595959;
+  margin-bottom: 2px;
+}
+
+.value {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #222;
+}
+
+.edit-link {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #195ccb;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.edit-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== Billing Tab ===== */
+.billing-tab {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px 0 rgb(43 68 158 / 7%);
+}
+
+.billing-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.billing-card {
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 280px;
+  background: #f7f9fc;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem;
+  color: #222;
+}
+
+.billing-card div {
+  margin-bottom: 6px;
+}
+
+/* ===== Order History Tab ===== */
+.order-history-tab {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.order-history-tab h3 {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+  color: #222;
+}
+
+.order-history-empty {
+  font-size: 1rem;
+  color: #555;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.order-history-table {
+  width: 100%;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #f6f8fa;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(70, 85, 180, 0.08);
+}
+
+.order-history-table thead tr {
+  background: #195ccb;
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.order-history-table th,
+.order-history-table td {
+  padding: 14px 20px;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.order-history-table tbody tr {
+  background: #fff;
+  border-bottom: 1px solid #e4e9ed;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.order-history-table tbody tr:hover {
+  background: #f0f4ff;
+  transform: translateY(-1px);
+}
+
+.order-history-products {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-history-product-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-history-product-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.order-history-more-products {
+  font-size: 0.85rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.order-history-total {
+  font-weight: 600;
+  color: #195ccb;
+}
+
+.order-history-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+}
+
+.order-history-badge.delivered {
+  background-color: #16a34a;
+}
+
+.order-history-badge.shipped {
+  background-color: #2563eb;
+}
+
+.order-history-badge.pending {
+  background-color: #b91c1c;
+}
+
+.order-history-actions button {
+  margin-right: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-history-actions button:hover {
+  transform: translateY(-1px);
+}
+
+/* ===== Wishlist Tab Buttons (shared) ===== */
+.order-history-tab button,
+.wishlist-card button {
+  background-color: #195ccb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.22s ease, transform 0.2s ease;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1080px) {
+  .user-account-content {
+    flex-direction: column; 
+    padding: 0 24px;
+  }
+
+  .user-account-sidebar {
+    width: 95%;
+    margin-bottom: 24px;
+  }
+
+  .user-account-main {
+    width: 100%;
+  }
+
+  .info-cards {
+    justify-content: space-around;
+  }
+
+  .billing-cards,
+  .order-history-products,
+  .wishlist-items {
+    justify-content: space-around;
+  }
+
+  .billing-card,
+  .order-history-product-item,
+  .wishlist-card {
+    flex: 1 1 45%;
+    max-width: 45%;
+  }
+}
+
+@media (max-width: 768px) {
+  .billing-card,
+  .order-history-product-item,
+  .wishlist-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .order-history-table th,
+  .order-history-table td {
+    font-size: 0.85rem;
+    padding: 10px 6px;
+  }
+
+  .order-history-product-item img {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 600px) {
+  .user-account-sidebar {
+    width: 90%;
+  }
+}
+
+@media (max-width: 500px) {
+  .order-history-table th:nth-child(3),
+  .order-history-table td:nth-child(3),
+  .order-history-table th:nth-child(4),
+  .order-history-table td:nth-child(4) {
+    display: none;
+  }
+
+  .order-history-more-products {
+    font-size: 0.8rem;
+  }
+}
+
+.edit-user-section {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(43, 68, 158, 0.07);
+}
+
+.edit-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-user-field {
+  display: grid;
+  grid-template-columns: repeat(2fr);
+}
+
+.edit-user label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+  color: #222;
+}
+
+.edit-user input {
+  width: 95%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+}
+
+.edit-user-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.edit-user-buttons button {
+  align-self: flex-start;
+  background-color: #195ccb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.22s ease;
+}
+
+.edit-user-buttons button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.edit-user-buttons button:hover:not(:disabled) {
+  background-color: #0f3bbd;
+}

@@ -5,38 +5,52 @@ import {
   updateQuantity,
   setShippingCost,
   setCoupon,
-  subscribeToCart,
+  subscribeCart,
 } from "../../redux/CartSlice";
 import Header from "../../components/home/Header";
 import Footer from "../../components/home/Footer";
 import PopularProducts from "../../components/home/popularProducts";
 import HighlightsSection from "../../components/home/HighlightSection";
 import { FaTrash, FaArrowRight } from "react-icons/fa";
+import { auth } from "../../firebase/firebaseConfig";
+import { useNavigate } from "react-router-dom";
 import "../../styles/home/CartPage.css";
 
 const CartPage = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { cartItems, subtotal, total, shippingCost, coupon } = useSelector(
     (state) => state.cart
   );
-  const userId = "demoUser"; // replace with current user ID (e.g., auth.uid)
 
+  const userId = auth.currentUser?.uid;
+
+  // Subscribe to Firestore cart in real-time
   useEffect(() => {
-    const unsubscribe = dispatch(subscribeToCart(userId));
+    if (!userId) return;
+    const unsubscribe = dispatch(subscribeCart(userId));
     return () => unsubscribe && unsubscribe();
   }, [dispatch, userId]);
 
+  // Handle quantity change via thunk
   const handleQuantityChange = (id, e) => {
     const newQty = Number(e.target.value);
-    if (newQty >= 1) updateQuantity(userId, id, newQty);
+    if (newQty >= 1) {
+      dispatch(updateQuantity(userId, id, newQty));
+    }
   };
 
-  const handleRemove = (id) => removeFromCart(userId, id);
+  // Handle removing item via thunk
+  const handleRemove = (id) => {
+    dispatch(removeFromCart(userId, id));
+  };
 
-  const handleShippingChange = (e) =>
-    dispatch(setShippingCost(e.target.value));
+  // Checkout
+  const handleCheckout = () => {
+    if (cartItems.length > 0) navigate("/checkout");
+  };
 
-  const handleCouponChange = (e) => dispatch(setCoupon(e.target.value));
+  const isCartEmpty = cartItems.length === 0;
 
   return (
     <>
@@ -58,7 +72,7 @@ const CartPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {cartItems.length === 0 ? (
+                  {isCartEmpty ? (
                     <tr>
                       <td colSpan="5" className="empty-cart">
                         Your cart is empty
@@ -69,9 +83,7 @@ const CartPage = () => {
                       <tr key={item.id}>
                         <td className="product-column">
                           <img
-                            src={
-                              item.imageUrl || item.image || "/placeholder.png"
-                            }
+                            src={item.imageUrl || item.image || "/placeholder.png"}
                             alt={item.name}
                             className="cart-product-img"
                           />
@@ -87,9 +99,7 @@ const CartPage = () => {
                             className="qty-input"
                           />
                         </td>
-                        <td>
-                          ₹{(Number(item.price) * item.quantity).toFixed(2)}
-                        </td>
+                        <td>₹{(Number(item.price) * item.quantity).toFixed(2)}</td>
                         <td>
                           <button
                             className="remove-btn"
@@ -113,8 +123,13 @@ const CartPage = () => {
               </div>
 
               <div className="summary-row">
-                <span>Shipping:</span>
-                <select value={shippingCost} onChange={handleShippingChange}>
+                <span>Shipping</span>
+                <select
+                  value={shippingCost}
+                  onChange={(e) =>
+                    dispatch(setShippingCost(Number(e.target.value)))
+                  }
+                >
                   <option value={0}>Free</option>
                   <option value={10}>Flat Rate (₹10)</option>
                   <option value={20}>Local Delivery (₹20)</option>
@@ -131,14 +146,20 @@ const CartPage = () => {
                   type="text"
                   placeholder="Coupon code"
                   value={coupon}
-                  onChange={handleCouponChange}
+                  onChange={(e) => dispatch(setCoupon(e.target.value))}
                 />
                 <button>
                   <FaArrowRight />
                 </button>
               </div>
 
-              <button className="checkout-btn">Proceed to Checkout</button>
+              <button
+                className={`checkout-btn ${isCartEmpty ? "disabled" : ""}`}
+                onClick={handleCheckout}
+                disabled={isCartEmpty}
+              >
+                {isCartEmpty ? "Cart is Empty" : "Proceed to Checkout"}
+              </button>
             </div>
           </div>
         </div>

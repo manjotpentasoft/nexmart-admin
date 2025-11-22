@@ -208,8 +208,8 @@
   visibility: visible;
 }
 
-.pc-hover-btn {
-  background: #E92530;
+.pc-hover-btn.pc-cart-btn {
+  background: #1e3a8a;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -221,14 +221,24 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-bottom: 10px;
-  width: 100%;
   justify-content: center;
 }
 
-.pc-hover-btn:hover {
+.pc-hover-btn.pc-cart-btn:hover {
   background: #c81e2a;
   transform: translateY(-2px);
+}
+
+/* If item is already in cart */
+.pc-hover-btn.pc-cart-btn.in-cart {
+  background: #28a745; /* green to indicate added */
+  cursor: default;
+}
+
+/* Optional: keep hover effect but subtle */
+.pc-hover-btn.pc-cart-btn.in-cart:hover {
+  background: #28a745;
+  transform: none;
 }
 
 .pc-hover-actions {

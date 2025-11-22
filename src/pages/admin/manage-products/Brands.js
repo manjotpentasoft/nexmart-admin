@@ -80,7 +80,7 @@ function BrandsPage() {
 
   // Delete brand
   const handleDeleteBrand = async (brand) => {
-    if (!window.confirm(`Delete "₹{brand.name}"?`)) return;
+    if (!window.confirm(`Delete "${brand.name}"?`)) return;
     setLoading(true);
     try {
       await deleteBrand(brand);
@@ -91,6 +91,8 @@ function BrandsPage() {
       setLoading(false);
     }
   };
+
+  if (loading) return <div className="loader"></div>;
 
   return (
     <AdminLayout>

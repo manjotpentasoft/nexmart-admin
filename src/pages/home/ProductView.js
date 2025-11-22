@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { db } from "../../firebase/firebaseConfig";
+import { auth, db } from "../../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import "../../styles/home/ProductView.css";
 import Header from "../../components/home/Header";
-import Footer from "../../components/home/Footer"
+import Footer from "../../components/home/Footer";
 import { FaHeart } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/CartSlice";
+import {
+  toggleWishlistItem,
+  loadWishlistFromFirestore,
+} from "../../firebase/wishlistService";
+import { toast } from "react-toastify";
+import SimilarProducts from "../../components/home/SimilarProducts";
 
 export default function ProductView() {
   const { productId } = useParams();
@@ -17,6 +23,7 @@ export default function ProductView() {
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [wishlist, setWishlist] = useState([]);
 
   const dispatch = useDispatch();
 
@@ -45,7 +52,6 @@ export default function ProductView() {
         const docSnap = await getDoc(doc(db, "products", productId));
         if (docSnap.exists()) {
           const data = docSnap.data();
-
           const sizesArr = Array.isArray(data.sizes)
             ? data.sizes
             : data.size
@@ -53,14 +59,13 @@ export default function ProductView() {
             : [];
           setSelectedSize(displayText(sizesArr[0]) || "");
 
-          // Ensure main image is first
           const mainImage = data.image ? [data.image] : [];
           const galleryImages = Array.isArray(data.galleryImages)
             ? data.galleryImages.filter((img) => img !== data.image)
             : [];
 
           setProduct({
-            id: docSnap.id, // important for Redux
+            id: docSnap.id,
             ...data,
             images: [...mainImage, ...galleryImages],
             colors: Array.isArray(data.color)
@@ -89,7 +94,25 @@ export default function ProductView() {
     fetchProduct();
   }, [productId]);
 
-  // Auto slideshow for gallery thumbnails
+  // Fetch wishlist for current user
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    async function fetchWishlist() {
+      try {
+        const items = await loadWishlistFromFirestore(auth.currentUser.uid);
+        setWishlist(items);
+      } catch (err) {
+        console.error("Failed to load wishlist:", err);
+      }
+    }
+    fetchWishlist();
+  }, [auth.currentUser]);
+
+  // Check if current product is in wishlist
+  const isInWishlist = () => wishlist.some((item) => item.id === product?.id);
+
+  // Auto slideshow
   useEffect(() => {
     if (!product?.images || product.images.length <= 1) return;
     const interval = setInterval(() => {
@@ -114,19 +137,61 @@ export default function ProductView() {
 
   if (!product) return <div className="loader"></div>;
 
-  const handleAddToCart = () => {
-    dispatch(
-      addToCart({
-        id: product.id,
-        name: displayText(product.name),
-        price: parseFloat(product.price || 0),
-        image: getImageUrl(product.images[0]), // always main image
-        quantity, // selected quantity
-        color: product.colors[selectedColor] || "",
-        size: selectedSize,
-      })
-    );
-    setQuantity(1); // reset quantity after adding
+  const handleAddToCart = async () => {
+    if (!auth.currentUser) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
+
+    const cartItem = {
+      id: product.id,
+      name: displayText(product.name),
+      price: parseFloat(product.price || 0),
+      image: getImageUrl(product.images[0]),
+      quantity,
+      color: product.colors[selectedColor] || "",
+      size: selectedSize,
+    };
+
+    try {
+      await dispatch(addToCart(auth.currentUser.uid, cartItem));
+      toast.success("Added to cart!");
+      setQuantity(1);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add to cart!");
+    }
+  };
+
+  // Toggle wishlist
+  const handleToggleWishlist = async () => {
+    if (!auth.currentUser) {
+      toast.error("Please login to update wishlist");
+      return;
+    }
+
+    const wishlistItem = {
+      id: product.id,
+      name: displayText(product.name),
+      image: getImageUrl(product.images[0]),
+      price: parseFloat(product.price || 0),
+      color: product.colors[selectedColor] || "",
+      size: selectedSize,
+    };
+
+    try {
+      await toggleWishlistItem(auth.currentUser.uid, wishlistItem);
+      toast.success("Wishlist updated!");
+      // Update local state immediately
+      setWishlist((prev) =>
+        prev.some((item) => item.id === product.id)
+          ? prev.filter((item) => item.id !== product.id)
+          : [...prev, wishlistItem]
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update wishlist");
+    }
   };
 
   return (
@@ -153,7 +218,7 @@ export default function ProductView() {
               <img
                 src={getImageUrl(product.images[imgIdx])}
                 alt={displayText(product.name)}
-                className="pv-main-img-large" // increase in CSS
+                className="pv-main-img-large"
               />
             </div>
           </div>
@@ -169,13 +234,15 @@ export default function ProductView() {
                 product.previousPrice !== product.price && (
                   <span className="pv-prev-price">
                     {" "}
-                    ${parseFloat(product.previousPrice).toFixed(2)}
+                    ₹{parseFloat(product.previousPrice).toFixed(2)}
                   </span>
                 )}
             </div>
 
             {product.shortDescription && (
-              <div className="pv-desc">{displayText(product.shortDescription)}</div>
+              <div className="pv-desc">
+                {displayText(product.shortDescription)}
+              </div>
             )}
 
             {/* Colors */}
@@ -185,7 +252,9 @@ export default function ProductView() {
                 {product.colors.map((c, i) => (
                   <span
                     key={i}
-                    className={`pv-color-dot${selectedColor === i ? " selected" : ""}`}
+                    className={`pv-color-dot${
+                      selectedColor === i ? " selected" : ""
+                    }`}
                     style={{ background: displayText(c) }}
                     onClick={() => setSelectedColor(i)}
                   ></span>
@@ -229,13 +298,27 @@ export default function ProductView() {
               <button className="pv-add-btn" onClick={handleAddToCart}>
                 Add To Cart
               </button>
-              <span className="pv-wishlist-btn">
+              <span
+                className="pv-wishlist-btn"
+                onClick={handleToggleWishlist}
+                style={{
+                  color: isInWishlist() ? "red" : "black",
+                  WebkitTextStroke: isInWishlist() ? "" : "1px red",
+                  cursor: "pointer",
+                }}
+              >
                 <FaHeart />
               </span>
             </div>
           </div>
         </div>
       </div>
+      {product && (
+        <SimilarProducts
+          categoryId={product.category}
+          currentProductId={product.id}
+        />
+      )}
 
       <Footer />
     </>

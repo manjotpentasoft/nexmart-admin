@@ -12,11 +12,11 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/CartSlice";
 import {
-  addToWishlist,
-  removeFromWishlist,
   subscribeToWishlist,
+  toggleWishlistItem,
 } from "../../firebase/wishlistService";
-import { getAuth } from "firebase/auth";
+import { auth } from "../../firebase/firebaseConfig";
+import { toast } from "react-toastify";
 
 export default function PopularProducts() {
   const navigate = useNavigate();
@@ -24,33 +24,81 @@ export default function PopularProducts() {
   const [products, setProducts] = useState([]);
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const sliderRef = useRef(null);
-  const [wishlist, setWishlist] = useState([]);
-  const [loadingWishlist, setLoadingWishlist] = useState(false);
-  const auth = getAuth();
-  const userId = auth.currentUser?.uid || "demoUser"; // replace with actual auth UID
+  const [wishlist, setWishlist] = useState([]);  const [userId, setUserId] = useState(null);
 
-  // Subscribe to wishlist in real-time
+  // Track auth state
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUserId(user?.uid || null);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Subscribe to wishlist realtime
   useEffect(() => {
     if (!userId) return;
     const unsub = subscribeToWishlist(userId, setWishlist);
     return () => unsub();
   }, [userId]);
 
-  // Check if a product is in wishlist
-  const isInWishlist = (productId) =>
-    wishlist.some((item) => item.id === productId);
+  const isInWishlist = (id) => wishlist.some((item) => item.id === id);
 
   const toggleWishlist = async (product) => {
-    if (!userId || !product?.id || loadingWishlist) return;
-    setLoadingWishlist(true);
+    if (!userId || !product?.id) return toast.error("Login required!");
     try {
-      if (isInWishlist(product.id)) {
-        await removeFromWishlist(userId, product.id);
-      } else {
-        await addToWishlist(userId, product);
-      }
-    } finally {
-      setLoadingWishlist(false);
+      await toggleWishlistItem(userId, product);
+      toast.success(`${product.name} wishlist updated!`);
+    } catch (err) {
+      toast.error("Failed to update wishlist");
+    }
+  };
+
+  // Subscribe to products
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection("products", setProducts);
+    return () => unsubscribe();
+  }, []);
+
+  // Scroll logic for slider
+  const scrollLeftFunc = () => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    const cardWidth = slider.querySelector(".pc-cat-card")?.offsetWidth || 210;
+    slider.scrollBy({ left: -cardWidth, behavior: "smooth" });
+  };
+
+  const scrollRightFunc = () => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    const cardWidth = slider.querySelector(".pc-cat-card")?.offsetWidth || 210;
+    slider.scrollBy({ left: cardWidth, behavior: "smooth" });
+  };
+
+  const renderStars = (rating = 0) =>
+    Array.from({ length: 5 }, (_, i) => (
+      <span key={i} className={i < rating ? "star filled" : "star"}>
+        ★
+      </span>
+    ));
+
+  const handleViewProduct = (id) => navigate(`/product/view/${id}`);
+
+  //  Fixed add-to-cart logic (dispatch thunk correctly)
+  const handleCart = async (product) => {
+    if (!userId) {
+      toast.error("Please log in to add to cart");
+      return;
+    }
+    if (!product?.id) {
+      console.error("Invalid product:", product);
+      return;
+    }
+    try {
+      await dispatch(addToCart(userId, { ...product, quantity: 1 }));
+      toast.success("Added to cart!");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add to cart");
     }
   };
 
@@ -83,101 +131,8 @@ export default function PopularProducts() {
     },
   ];
 
-  //  Realtime Firestore subscription
-  useEffect(() => {
-    const unsubscribe = subscribeToCollection("products", setProducts);
-    return () => unsubscribe();
-  }, []);
-
-  //  Slider drag logic
-  useEffect(() => {
-    const slider = sliderRef.current;
-    if (!slider) return;
-
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    const mouseDown = (e) => {
-      isDown = true;
-      slider.classList.add("active");
-      startX = e.pageX - slider.offsetLeft;
-      scrollLeft = slider.scrollLeft;
-    };
-    const mouseLeave = () => {
-      isDown = false;
-      slider.classList.remove("active");
-    };
-    const mouseUp = () => {
-      isDown = false;
-      slider.classList.remove("active");
-    };
-    const mouseMove = (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - startX) * 2;
-      slider.scrollLeft = scrollLeft - walk;
-    };
-
-    slider.addEventListener("mousedown", mouseDown);
-    slider.addEventListener("mouseleave", mouseLeave);
-    slider.addEventListener("mouseup", mouseUp);
-    slider.addEventListener("mousemove", mouseMove);
-
-    return () => {
-      slider.removeEventListener("mousedown", mouseDown);
-      slider.removeEventListener("mouseleave", mouseLeave);
-      slider.removeEventListener("mouseup", mouseUp);
-      slider.removeEventListener("mousemove", mouseMove);
-    };
-  }, []);
-
-  //  Scroll buttons
-  const scrollLeftFunc = () => {
-    const slider = sliderRef.current;
-    if (slider) {
-      const cardWidth =
-        slider.querySelector(".pc-cat-card")?.offsetWidth || 210;
-      slider.scrollBy({ left: -cardWidth, behavior: "smooth" });
-    }
-  };
-
-  const scrollRightFunc = () => {
-    const slider = sliderRef.current;
-    if (slider) {
-      const cardWidth =
-        slider.querySelector(".pc-cat-card")?.offsetWidth || 210;
-      slider.scrollBy({ left: cardWidth, behavior: "smooth" });
-    }
-  };
-
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={i < rating ? "star filled" : "star"}>
-        ★
-      </span>
-    ));
-  };
-
-  const handleViewProduct = (id) => navigate(`/product/view/${id}`);
-
-  //  Fixed add to cart logic
-  const handleCart = async (product) => {
-    if (!product || !product.id) {
-      console.error("Invalid product:", product);
-      return;
-    }
-    try {
-      await dispatch(addToCart(userId, product));
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-    }
-  };
-
   return (
     <div className="pc-main">
-      {/* Header Row */}
       <div className="pc-header">
         <span className="pc-title">Today's popular picks</span>
         <div className="arrows">
@@ -190,40 +145,36 @@ export default function PopularProducts() {
         </div>
       </div>
 
-      {/* Category Row */}
+      {/* Product Slider */}
       <div className="pc-cat-row" ref={sliderRef}>
         {products.length === 0 ? (
           <div className="empty-cart">No products found.</div>
         ) : (
-          products.map((product, i) => (
+          products.map((product) => (
             <div
               className={`pc-cat-card ${
                 hoveredProduct === product.id ? "hovered" : ""
               }`}
-              key={product.id || i}
+              key={product.id}
               onMouseEnter={() => setHoveredProduct(product.id)}
               onMouseLeave={() => setHoveredProduct(null)}
             >
-              {/* Category/Brand */}
               {product.category && (
                 <div className="pc-product-category">{product.category}</div>
               )}
               <div className="pc-cat-brand">{product.brand}</div>
 
-              {/* Image */}
               <img
                 src={product.image || product.imageUrl || "/placeholder.png"}
                 alt={product.name}
                 className="pc-cat-img"
               />
 
-              {/* Name */}
               <div className="pc-cat-label">{product.name}</div>
 
-              {/* Price */}
               <div className="pc-price-section">
                 <div className="pc-cat-price">
-                  ₹{Number(product.price).toFixed(2)}
+                  ₹{Number(product.price || 0).toFixed(2)}
                 </div>
                 {product.originalPrice && (
                   <div className="pc-original-price">
@@ -232,7 +183,6 @@ export default function PopularProducts() {
                 )}
               </div>
 
-              {/* Rating */}
               {product.rating && (
                 <div className="pc-rating">
                   {renderStars(product.rating)}
@@ -240,7 +190,6 @@ export default function PopularProducts() {
                 </div>
               )}
 
-              {/* Stock Status */}
               {product.stock && (
                 <div
                   className={`pc-stock ${
@@ -251,14 +200,13 @@ export default function PopularProducts() {
                 </div>
               )}
 
-              {/* Hover Overlay */}
               <div className="pc-hover-overlay">
                 <div className="pc-hover-actions">
                   <button
                     style={{
                       background: isInWishlist(product.id)
                         ? "#FF0000"
-                        : "#E92530",
+                        : "#1e3a8a",
                       borderRadius: "50%",
                       padding: "10px",
                     }}
@@ -268,7 +216,7 @@ export default function PopularProducts() {
                   </button>
                   <button
                     style={{
-                      background: "#E92530",
+                      background: "#1e3a8a",
                       borderRadius: "50%",
                       padding: "10px",
                     }}
@@ -289,7 +237,7 @@ export default function PopularProducts() {
         )}
       </div>
 
-      {/* Promos Row */}
+      {/* Promo Row */}
       <div className="pc-promos-row">
         {promos.map((promo, i) => (
           <div

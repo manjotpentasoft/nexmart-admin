@@ -1,5 +1,5 @@
 import { db } from "../../firebase/firebaseConfig.js";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const products = [
   {
@@ -15,7 +15,7 @@ const products = [
     reviewsCount: 19,
     salesCount: 120,
     description: "High-quality Bluetooth-compatible speaker with extra bass and portable design.",
-    createdAt: new Date()
+    createdAt: serverTimestamp()
   },
   {
     name: "Sharp Full Auto Front Loading Inverter Washing Machine ES-FW105D7PS",
@@ -30,7 +30,7 @@ const products = [
     reviewsCount: 19,
     salesCount: 75,
     description: "Spacious front-loading washing machine with multiple wash cycles and energy-efficient motor.",
-    createdAt: new Date()
+    createdAt: serverTimestamp()
   },
   {
     "name": "Apple AirPods Pro 2nd Generation",

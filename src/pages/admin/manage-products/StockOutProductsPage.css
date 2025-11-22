@@ -1,9 +1,16 @@
-/* StockOutProductsPage.css */
 .stockout-header {
   margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.stockout-header h1 {
+.stockout-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.stockout-title h1 {
   margin: 0;
   font-size: 2rem;
   background: linear-gradient(90deg, #4299e1 0%, #27bda0 100%);
@@ -16,21 +23,12 @@
   letter-spacing: 1px;
 }
 
-.stockout-header p {
+.stockout-title p {
   margin: 4px 0 0;
   color: #4a5568;
+  text-align: left;
 }
 
-.table-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
 
 .entries-selector {
   display: flex;

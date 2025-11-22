@@ -27,7 +27,7 @@ const ShopBrands = () => {
       <div className="shop-container">
         <section className="brands-section">
           <h2 className="brand-section-title">Shop by Brands</h2>
-          <div className="loading">Loading brands...</div>
+          <div className="loader"></div>
         </section>
       </div>
     );

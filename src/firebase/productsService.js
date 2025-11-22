@@ -9,88 +9,69 @@ import {
   onSnapshot,
   where,
   query,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
+import { validateProductReferences } from "./firestoreService";
+import { COLLECTIONS } from "../constants/firebaseSchema";
 
-/**
- * Fetch all products once
- */
+/** Fetch all products once */
 export const fetchProducts = async () => {
-  const snapshot = await getDocs(collection(db, "products"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const snapshot = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-/**
- * Subscribe to real-time updates for products
- * @param {function} callback - Function called with updated product list
- * @returns unsubscribe function
- */
+/** Subscribe to products realtime */
 export const subscribeToProducts = (callback) => {
-  const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
-    const products = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return onSnapshot(collection(db, COLLECTIONS.PRODUCTS), (snap) => {
+    const products = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     callback(products);
   });
-
-  return unsubscribe;
 };
 
-/**
- * Add a new product
- * @param {object} productData
- * @returns created document reference
- */
 export const addProduct = async (productData) => {
-  const docRef = await addDoc(collection(db, "products"), {
+  await validateProductReferences({
+    brandId: productData.brandId,
+    categoryId: productData.categoryId,
+    subcategoryId: productData.subcategoryId,
+  });
+
+  const docRef = await addDoc(collection(db, COLLECTIONS.PRODUCTS), {
     ...productData,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
   return docRef;
 };
 
-/**
- * Update a product
- * @param {string} productId
- * @param {object} updatedData
- */
 export const updateProduct = async (productId, updatedData) => {
-  const productRef = doc(db, "products", productId);
-  await updateDoc(productRef, {
+  await validateProductReferences({
+    brandId: updatedData.brandId,
+    categoryId: updatedData.categoryId,
+    subcategoryId: updatedData.subcategoryId,
+  });
+
+  await updateDoc(doc(db, COLLECTIONS.PRODUCTS, productId), {
     ...updatedData,
-    updatedAt: new Date(),
+    updatedAt: serverTimestamp(),
   });
 };
 
-/**
- * Delete a product
- * @param {string} productId
- */
+/** Delete product */
 export const deleteProduct = async (productId) => {
-  const productRef = doc(db, "products", productId);
-  await deleteDoc(productRef);
+  await deleteDoc(doc(db, COLLECTIONS.PRODUCTS, productId));
 };
 
-/**
- * Convert file to Base64
- * @param {File} file
- * @returns {Promise<string>} Base64 string
- */
+/** Resize & image helpers (kept as in original productsService) */
 export const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = (err) => reject(err);
   });
 
-/**
- * Resize and compress image to a maximum width/height
- * @param {File} file
- * @param {number} maxWidth
- * @param {number} maxHeight
- * @param {number} quality (0-1)
- * @returns {Promise<string>} Base64 string
- */
 export const resizeFile = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -127,28 +108,32 @@ export const resizeFile = (file, maxWidth = 800, maxHeight = 800, quality = 0.7)
     reader.readAsDataURL(file);
   });
 
-/**
- * Process single or multiple files and return Base64
- * @param {File|File[]} files
- * @returns {Promise<string|string[]>} Base64 string(s)
- */
+/** Process files - single or multiple */
 export const processImages = async (files) => {
   if (Array.isArray(files)) {
-    return await Promise.all(files.map((file) => resizeFile(file)));
+    return Promise.all(files.map((file) => resizeFile(file)));
   } else if (files) {
-    return await resizeFile(files);
+    return resizeFile(files);
   }
   return null;
 };
 
-export async function getProducts(filter) {
-  let q = collection(db, "products");
+/** Get products with optional filters (brand, price, category) */
+export async function getProducts(filter = { brand: [], price: null, category: null }) {
+  let q = collection(db, COLLECTIONS.PRODUCTS);
   const qArr = [];
-  if (filter.brand.length) qArr.push(where('brand', 'in', filter.brand));
-  if (filter.price) qArr.push(where('price', '>=', filter.price[0]), where('price', '<=', filter.price[1]));
+
+  if (filter.brand?.length) qArr.push(where("brand", "in", filter.brand));
+  if (filter.category) qArr.push(where("category", "==", filter.category));
+  if (filter.price && Array.isArray(filter.price) && filter.price.length === 2) {
+    qArr.push(
+      where("price", ">=", filter.price[0]),
+      where("price", "<=", filter.price[1])
+    );
+  }
 
   if (qArr.length) q = query(q, ...qArr);
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

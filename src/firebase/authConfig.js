@@ -1,66 +1,57 @@
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  GoogleAuthProvider, 
-  signInWithPopup 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
-import { auth, db } from "./firebaseConfig";
 import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "./firebaseConfig";
+import { COLLECTIONS } from "../constants/firebaseSchema";
 
-// Register new user and save to Firestore
-export async function register(email, password, name) {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-
-  await setDoc(doc(db, "users", user.uid), {
-    name,
+export async function register(email, password, displayName, extraData = {}) {
+  const credential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = credential.user;
+  const userDoc = {
+    name: displayName,
     email,
     createdAt: serverTimestamp(),
-  });
-
-  return user;
+    ...extraData,
+  };
+  await setDoc(doc(db, COLLECTIONS.USERS, user.uid), userDoc);
+  return { uid: user.uid, ...userDoc };
 }
 
-// Login user and get Firestore data
 export async function login(email, password) {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-
-  const userDoc = await getDoc(doc(db, "users", user.uid));
-  if (userDoc.exists()) {
-    return { uid: user.uid, ...userDoc.data() };
-  } else {
-    throw new Error("User data not found in Firestore");
-  }
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  const user = credential.user;
+  const userSnap = await getDoc(doc(db, COLLECTIONS.USERS, user.uid));
+  if (userSnap.exists()) return { uid: user.uid, ...userSnap.data() };
+  throw new Error("User data not found in Firestore");
 }
 
-// Login with Google and store in Firestore if new
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
-  const userCredential = await signInWithPopup(auth, provider);
-  const user = userCredential.user;
-
-  const userDoc = await getDoc(doc(db, "users", user.uid));
-  if (!userDoc.exists()) {
-    await setDoc(doc(db, "users", user.uid), {
+  const credential = await signInWithPopup(auth, provider);
+  const user = credential.user;
+  const userRef = doc(db, COLLECTIONS.USERS, user.uid);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    await setDoc(userRef, {
       name: user.displayName || "Unnamed",
       email: user.email,
       createdAt: serverTimestamp(),
     });
   }
-
-  return { uid: user.uid, ...userDoc.data() };
+  return { uid: user.uid, ...userSnap.data() };
 }
 
-// Logout
 export async function logout() {
   return signOut(auth);
 }
 
-// Listen to user data in real-time
 export function listenToUser(uid, callback) {
-  return onSnapshot(doc(db, "users", uid), (doc) => {
-    callback(doc.exists() ? doc.data() : null);
+  return onSnapshot(doc(db, COLLECTIONS.USERS, uid), (snap) => {
+    callback(snap.exists() ? snap.data() : null);
   });
 }

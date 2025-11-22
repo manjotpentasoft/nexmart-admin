@@ -1,10 +1,11 @@
+// Header.jsx
 import React, { useEffect, useState, useRef } from "react";
 import {
   FaHeadphones,
-  FaHeart,
   FaSearch,
   FaShoppingCart,
   FaTimes,
+  FaUser,
 } from "react-icons/fa";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { Link, useNavigate } from "react-router-dom";
@@ -16,6 +17,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [cartItems, setCartItems] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,18 +29,18 @@ const Header = () => {
   const dropdownRef = useRef(null);
   const searchRef = useRef(null);
   const hoverTimeoutRef = useRef(null);
-  const [dropdownStyle, setDropdownStyle] = useState({ left: 0, top: 0 });
+  const [dropdownStyle, setDropdownStyle] = useState({
+    left: "0px",
+    top: "0px",
+  });
 
-  const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
-
-  // User-specific cart subscription
+  // ✅ Firebase Subscriptions
   useEffect(() => {
     const auth = getAuth();
     let unsubscribeCart = () => {};
-
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user?.uid) {
-        unsubscribeCart(); // cleanup previous subscription
+        unsubscribeCart();
         unsubscribeCart = subscribeToCart(user.uid, setCartItems);
       } else {
         setCartItems([]);
@@ -46,24 +48,18 @@ const Header = () => {
       }
     });
 
-    return () => {
-      unsubscribeAuth();
-      unsubscribeCart();
-    };
-  }, []);
-
-  // Firestore subscriptions for products & categories
-  useEffect(() => {
     const unsubProducts = subscribeToCollection("products", setProducts);
     const unsubCategories = subscribeToCollection("categories", setCategories);
 
     return () => {
+      unsubscribeAuth();
+      unsubscribeCart();
       unsubProducts();
       unsubCategories();
     };
   }, []);
 
-  // Search filtering
+  // ✅ Search filtering (intact)
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredProducts([]);
@@ -72,13 +68,21 @@ const Header = () => {
     }
     const term = searchTerm.toLowerCase();
     const filtered = products
-      .filter((p) => (p.name || "").toLowerCase().includes(term))
+      .filter((p) => {
+        const matchesName = (p.name || "").toLowerCase().includes(term);
+        const matchesCategory =
+          !selectedCategory ||
+          (p.category &&
+            p.category.toLowerCase() === selectedCategory.toLowerCase());
+        return matchesName && matchesCategory;
+      })
       .slice(0, 8);
+
     setFilteredProducts(filtered);
     setShowSearchDropdown(true);
-  }, [searchTerm, products]);
+  }, [searchTerm, products, selectedCategory]);
 
-  // Close search dropdown on outside click
+  // ✅ Close search dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
@@ -89,46 +93,30 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Category dropdown hover
+  // ✅ Handle dropdown open/close and positioning
   const openDropdown = () => {
     clearTimeout(hoverTimeoutRef.current);
     setDropdownOpen(true);
   };
+
   const closeDropdownWithDelay = () => {
     clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => setDropdownOpen(false), 160);
   };
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleDocClick = (e) => {
-      if (
-        dropdownOpen &&
-        !buttonRef.current?.contains(e.target) &&
-        !dropdownRef.current?.contains(e.target)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleDocClick);
-    return () => document.removeEventListener("mousedown", handleDocClick);
-  }, [dropdownOpen]);
-
-  // Update dropdown position dynamically
   useEffect(() => {
     if (!dropdownOpen) return;
     const updatePosition = () => {
       if (!buttonRef.current) return;
       const rect = buttonRef.current.getBoundingClientRect();
-      const preferredLeft = rect.left + window.scrollX;
-      const preferredTop = rect.bottom + window.scrollY + 8;
       const ddWidth = dropdownRef.current
         ? dropdownRef.current.offsetWidth
         : 360;
-      let left = preferredLeft;
+      let left = rect.left + window.scrollX;
       const maxLeft = window.innerWidth - ddWidth - 12;
       if (left > maxLeft) left = Math.max(12, maxLeft);
-      setDropdownStyle({ left: `${left}px`, top: `${preferredTop}px` });
+      const top = rect.bottom + window.scrollY + 8;
+      setDropdownStyle({ left: `${left}px`, top: `${top}px` });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -139,19 +127,31 @@ const Header = () => {
     };
   }, [dropdownOpen]);
 
-  // Recursive submenu renderer
+  // ✅ Navigate when a category is clicked
+  const handleCategoryClick = (categoryId) => {
+    setDropdownOpen(false);
+    navigate(`/category/${categoryId}`);
+  };
+
+  // ✅ Recursive Submenu Rendering
   const renderSubMenu = (items) => (
     <ul className="dropdown-submenu">
       {items.map((item) => (
         <li key={item.id}>
-          <span className="submenu-item">{item.name}</span>
+          <span
+            className="submenu-item"
+            onClick={() => handleCategoryClick(item.id)}
+            style={{ cursor: "pointer" }}
+          >
+            {item.name}
+          </span>
           {item.subcategories?.length > 0 && renderSubMenu(item.subcategories)}
         </li>
       ))}
     </ul>
   );
 
-  const handleCart = () => navigate("/cart");
+  // ✅ Product search click
   const handleProductClick = (id) => {
     setSearchTerm("");
     setShowSearchDropdown(false);
@@ -166,63 +166,85 @@ const Header = () => {
           <img src="./assets/images/logo-light.png" alt="Logo" />
         </div>
 
-        {/* Search Section */}
-        <div className="search-section" ref={searchRef}>
-          <select>
-            <option>Select Category</option>
+        {/* ---------- Search Bar ---------- */}
+        <div className="search-bar" ref={searchRef}>
+          <select
+            className="search-category"
+            aria-label="category"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="">All Categories</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.name}>
                 {cat.name}
               </option>
             ))}
           </select>
+
           <input
             type="text"
-            placeholder="Search Products"
+            placeholder="Search products, brands, and more..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={() => searchTerm && setShowSearchDropdown(true)}
+            aria-label="search"
           />
-          <button className="search-btn">
-            <FaSearch />
+
+          <button
+            className="search-btn"
+            aria-label="search-button"
+            onClick={() => {
+              if (searchTerm.trim()) {
+                navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+              }
+            }}
+          >
+            <FaSearch size={22} />
           </button>
 
           {/* Search Dropdown */}
-          {showSearchDropdown && filteredProducts.length > 0 && (
-            <div className="search-dropdown">
-              {filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="search-result-item"
-                  onClick={() => handleProductClick(product.id)}
-                >
-                  <img
-                    src={
-                      product.image ||
-                      (Array.isArray(product.images) && product.images[0]) ||
-                      "/placeholder.png"
-                    }
-                    alt={product.name}
-                    className="search-result-thumb"
-                  />
-                  <div className="search-result-info">
-                    <span className="name">{product.name}</span>
-                    <span className="price">₹{product.price || "0.00"}</span>
+          {showSearchDropdown && (
+            <div
+              className="search-dropdown"
+              role="listbox"
+              aria-label="search-results"
+            >
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="search-result-item"
+                    onClick={() => handleProductClick(product.id)}
+                    role="option"
+                  >
+                    <img
+                      src={
+                        product.image ||
+                        (Array.isArray(product.images) && product.images[0]) ||
+                        "/placeholder.png"
+                      }
+                      alt={product.name}
+                      className="search-result-thumb"
+                    />
+                    <div className="search-result-info">
+                      <span className="name">{product.name}</span>
+                      <span className="price">₹{product.price ?? "0.00"}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="search-dropdown empty">No products found</div>
+              )}
             </div>
-          )}
-          {showSearchDropdown && filteredProducts.length === 0 && (
-            <div className="search-dropdown empty">No products found</div>
           )}
         </div>
 
-        {/* Hotline Section */}
+        {/* Hotline */}
         <div className="header-side">
           <span className="lang">EN</span>
-          <span className="hotline">
-            <FaHeadphones size={35} />
+          <span className="hotline" title="Hotline">
+            <FaHeadphones size={32} />
             <span className="call">
               91 2345 678
               <br />
@@ -233,20 +255,22 @@ const Header = () => {
 
         {/* Mobile Icons */}
         <div className="mobile-icons">
-          <button onClick={() => navigate("/wishlist")} className="cart-icon-mobile">
-            <FaHeart color="red" />
-          </button>
           <Link className="cart-icon-mobile" to="/cart">
             <FaShoppingCart />
-            {/* <sup>{cartItems.length}</sup> */}
           </Link>
-          <button className="hamburger-menu-mobile" onClick={toggleSidebar}>
+          <Link className="cart-icon-mobile" to="/account">
+            <FaUser />
+          </Link>
+          <button
+            className="hamburger-menu-mobile"
+            onClick={() => setSidebarOpen((s) => !s)}
+          >
             <GiHamburgerMenu />
           </button>
         </div>
       </header>
 
-      {/* ---------- DESKTOP NAVBAR ---------- */}
+      {/* ---------- NAVBAR ---------- */}
       <nav className="navbar">
         <div
           className="all-categories"
@@ -265,90 +289,76 @@ const Header = () => {
         </div>
 
         <div className="navbar-actions">
-          <Link to="/wishlist" className="wishlist">
-            <FaHeart />
-          </Link>
           <Link className="cart" to="/cart">
             <FaShoppingCart />
-            {/* <sup>{cartItems.length}</sup> */}
+          </Link>
+          <Link className="cart" to="/account">
+            <FaUser />
           </Link>
         </div>
       </nav>
 
       {/* ---------- MOBILE SIDEBAR ---------- */}
       <div className={`mobile-sidebar ${isSidebarOpen ? "open" : ""}`}>
-        <div className="close-btn" onClick={toggleSidebar}>
+        <div className="close-btn" onClick={() => setSidebarOpen(false)}>
           <FaTimes />
         </div>
-
         <ul>
           <li>
-            <Link to="/" onClick={toggleSidebar}>
+            <Link to="/" onClick={() => setSidebarOpen(false)}>
               Home
             </Link>
           </li>
           <li>
-            <Link to="/shop" onClick={toggleSidebar}>
+            <Link to="/shop" onClick={() => setSidebarOpen(false)}>
               Shop
             </Link>
           </li>
           <li>
-            <Link to="/about" onClick={toggleSidebar}>
+            <Link to="/about" onClick={() => setSidebarOpen(false)}>
               About
             </Link>
           </li>
           <li>
-            <Link to="/contact" onClick={toggleSidebar}>
+            <Link to="/contact" onClick={() => setSidebarOpen(false)}>
               Contact
             </Link>
           </li>
         </ul>
-
-        <div className="sidebar-contact">
-          <p>
-            <strong>Contact Info</strong>
-          </p>
-          <p>57 Heol Isaf Station Road, Cardiff, UK</p>
-          <p>91 2345 678</p>
-          <p>info@example.com</p>
-        </div>
       </div>
 
-      {/* Dropdown Overlay */}
+      {/* ---------- CATEGORIES DROPDOWN ---------- */}
       {dropdownOpen && (
-        <div
-          className="categories-dropdown-overlay"
-          aria-hidden="true"
-          style={{ pointerEvents: "none" }}
-        />
-      )}
-
-      {/* Categories Dropdown */}
-      {dropdownOpen && (
-        <div
-          className="categories-dropdown"
-          ref={dropdownRef}
-          style={{
-            left: dropdownStyle.left,
-            top: dropdownStyle.top,
-            zIndex: 3000,
-          }}
-          onMouseEnter={openDropdown}
-          onMouseLeave={closeDropdownWithDelay}
-        >
-          <div className="dropdown-inner">
-            {categories.length === 0 && (
-              <div className="dropdown-empty">No categories</div>
-            )}
-            {categories.map((cat) => (
-              <div key={cat.id} className="dropdown-category">
-                <span className="dropdown-title">{cat.name}</span>
-                {cat.subcategories?.length > 0 &&
-                  renderSubMenu(cat.subcategories)}
-              </div>
-            ))}
+        <>
+          <div className="categories-dropdown-overlay" aria-hidden="true" />
+          <div
+            className="categories-dropdown"
+            ref={dropdownRef}
+            style={{ left: dropdownStyle.left, top: dropdownStyle.top }}
+            onMouseEnter={openDropdown}
+            onMouseLeave={closeDropdownWithDelay}
+          >
+            <div className="dropdown-inner">
+              {categories.length === 0 ? (
+                <div className="dropdown-empty">No categories</div>
+              ) : (
+                categories.map((cat) => (
+                  <div key={cat.id} className="dropdown-category">
+                    <span
+                      className="dropdown-title"
+                      onClick={() => handleCategoryClick(cat.id)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {cat.name}
+                    </span>
+                    {cat.subcategories?.length > 0 &&
+                      renderSubMenu(cat.subcategories)}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

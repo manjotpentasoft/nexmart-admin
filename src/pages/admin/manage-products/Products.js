@@ -123,7 +123,7 @@ function ProductsPage() {
           <p>Manage and track all products here.</p>
         </div>
         <div className="products-actions">
-          <div className="search-container">
+          <div className="products-search-container">
             <input
               type="text"
               placeholder="Search Products..."

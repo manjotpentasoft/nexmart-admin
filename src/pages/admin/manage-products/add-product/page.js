@@ -1,4 +1,3 @@
-import React from "react";
 import "./AddProductPage.css";
 import { FaProductHunt, FaFileCode } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +18,7 @@ function AddProductPage() {
           <div className="add-product-grid">
             {/* Physical Product */}
             <div
-              className="product-card"
+              className="add-product-card"
               onClick={() => navigate("/admin/create/physical")}
             >
               <div className="icon blue">
@@ -30,7 +29,7 @@ function AddProductPage() {
 
             {/* Digital Product */}
             <div
-              className="product-card"
+              className="add-product-card"
               onClick={() => navigate("/admin/create/digital")}
             >
               <div className="icon light-blue">

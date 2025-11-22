@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from "react";
-import "../../styles/OrdersPage.css";
-import { db } from "../../firebase/firebaseConfig";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  doc,
-  updateDoc,
-  deleteDoc,
-  increment,
-} from "firebase/firestore";
+import React, { useState, useEffect, useMemo } from "react";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/AdminLayout";
+import "../../styles/OrdersPage.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import {
+  deleteOrder,
+  updateOrder,
+  toggleDeliveredStatus,
+  bulkUpdateDelivered,
+  fetchAllUserOrders,
+} from "../../firebase/ordersService";
 
 function OrdersPage() {
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -26,244 +23,205 @@ function OrdersPage() {
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch orders from Firestore
+  /** Fetch orders from service */
   useEffect(() => {
-    const fetchOrders = async () => {
+    const loadOrders = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        const fetchedOrders = querySnapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        }));
-        setOrders(fetchedOrders);
-        setFilteredOrders(fetchedOrders);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
+        const data = await fetchAllUserOrders();
+        setOrders(data);
+      } catch (err) {
+        toast.error("Failed to load orders.");
       } finally {
-        setLoading(false); // stop loader once fetch is done
+        setLoading(false);
       }
     };
-    fetchOrders();
+    loadOrders();
   }, []);
 
-  // Filtering
-  useEffect(() => {
-    let filtered = [...orders];
+  // helper: convert various createdAt shapes to a JS Date
+  const parseOrderDate = (createdAt) => {
+    if (!createdAt) return null;
 
-    // Date filter
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      filtered = filtered.filter((order) => {
-        const orderDate = new Date(order.createdAt);
-        return orderDate >= start && orderDate <= end;
-      });
+    if (
+      typeof createdAt === "object" &&
+      typeof createdAt.toDate === "function"
+    ) {
+      return createdAt.toDate();
     }
 
-    // Payment status filter
-    if (paymentFilter) {
-      filtered = filtered.filter((order) =>
-        paymentFilter === "Paid"
-          ? order.paymentStatus === "Paid"
-          : order.paymentStatus === "Pending"
-      );
+    if (typeof createdAt === "number") {
+      if (createdAt < 1e12) return new Date(createdAt * 1000);
+      return new Date(createdAt);
     }
 
-    // Order status filter
-    if (orderStatusFilter) {
-      filtered = filtered.filter(
-        (order) =>
-          order.orderStatus?.toLowerCase() === orderStatusFilter.toLowerCase()
-      );
+    if (typeof createdAt === "string") {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(createdAt)) {
+        const [y, m, d] = createdAt.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      }
+      return new Date(createdAt);
     }
 
-    // Search
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (order) =>
-          order.id.toLowerCase().includes(term) ||
-          order.user?.toLowerCase().includes(term)
-      );
+    // fallback
+    return new Date(createdAt);
+  };
+
+  const filteredOrders = useMemo(() => {
+    let start = startDate ? new Date(startDate) : null;
+    let end = endDate ? new Date(endDate) : null;
+
+    // convert to local-day inclusive bounds
+    if (start) {
+      start.setHours(0, 0, 0, 0);
+    }
+    if (end) {
+      end.setHours(23, 59, 59, 999);
     }
 
-    setFilteredOrders(filtered);
-    setCurrentPage(1);
+    return orders.filter((order) => {
+      // --- date ---
+      const orderDate = parseOrderDate(order.createdAt);
+      if (!orderDate) return false; // or decide to include if missing
+
+      if (start && orderDate < start) return false;
+      if (end && orderDate > end) return false;
+
+      // --- payment status ---
+      const isPaid =
+        (order.paymentMethod && order.paymentMethod !== "cod") ||
+        (order.status && order.status.toString().toLowerCase() === "paid");
+      if (paymentFilter === "Paid" && !isPaid) return false;
+      if (paymentFilter === "Pending" && isPaid) return false;
+
+      // --- order status ---
+      if (orderStatusFilter) {
+        const normalizedStatus = (order.status || "").toString().toLowerCase();
+        if (normalizedStatus !== orderStatusFilter.toLowerCase()) return false;
+      }
+
+      // --- search ---
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const fullName = `${order.billing?.firstName || ""} ${
+          order.billing?.lastName || ""
+        }`.toLowerCase();
+        const username = (order.username || "").toLowerCase();
+        const id = (order.id || "").toLowerCase();
+        if (
+          !id.includes(term) &&
+          !fullName.includes(term) &&
+          !username.includes(term)
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   }, [
     orders,
-    searchTerm,
     startDate,
     endDate,
     paymentFilter,
     orderStatusFilter,
+    searchTerm,
   ]);
 
-  // Pagination
+  /** Pagination logic */
   const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages || 1);
-  }, [totalPages, currentPage]);
   const currentData = filteredOrders.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
-  // Modals
-  const handleView = (order) => {
-    navigate(`/admin/orders/invoice/${order.id}`);
-  };
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages || 1);
+  }, [totalPages, currentPage]);
 
-  const closeEditModal = () => {
-    setEditModalOpen(false);
-    setSelectedOrder(null);
-  };
+  /** Actions */
+  const handleView = (order) => navigate(`/admin/orders/${order.id}`);
 
-  // Edit / Delete
   const handleEdit = (order) => {
     setSelectedOrder(order);
     setEditModalOpen(true);
   };
-  const handleDelete = async (orderId) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) return;
-    try {
-      await deleteDoc(doc(db, "orders", orderId));
-      setOrders((prev) => prev.filter((o) => o.id !== orderId));
-      setFilteredOrders((prev) => prev.filter((o) => o.id !== orderId));
-    } catch (err) {
-      console.error("Error deleting order:", err);
-    }
+
+  const handleCloseModal = () => {
+    setSelectedOrder(null);
+    setEditModalOpen(false);
   };
-  // Edit / Save with stock updates
+
+  /** Save edit changes */
   const handleSaveEdit = async () => {
     if (!selectedOrder) return;
-
     try {
-      const orderRef = doc(db, "orders", selectedOrder.id);
+      const prevStatus = orders.find((o) => o.id === selectedOrder.id)?.status;
 
-      // Fetch previous order status to compare
-      const prevOrder = orders.find((o) => o.id === selectedOrder.id);
-      const prevStatus = prevOrder?.orderStatus;
+      await updateOrder(selectedOrder.userId, selectedOrder, prevStatus);
 
-      // Determine stock change
-      const shouldDecreaseStock =
-        selectedOrder.orderStatus === "Delivered" && prevStatus !== "Delivered";
-      const shouldIncreaseStock =
-        selectedOrder.orderStatus !== "Delivered" && prevStatus === "Delivered";
-
-      // Update product stock if needed
-      if (shouldDecreaseStock || shouldIncreaseStock) {
-        const productUpdates =
-          selectedOrder.products?.map(async (product) => {
-            const productRef = doc(db, "products", product.id);
-            await updateDoc(productRef, {
-              stock: shouldDecreaseStock
-                ? increment(-product.quantity)
-                : increment(product.quantity),
-            });
-          }) || [];
-
-        await Promise.all(productUpdates);
-      }
-
-      // Update order in Firestore
-      await updateDoc(orderRef, {
-        orderStatus: selectedOrder.orderStatus,
-        paymentStatus: selectedOrder.paymentStatus,
-      });
-
-      // Update local state
       setOrders((prev) =>
         prev.map((o) => (o.id === selectedOrder.id ? selectedOrder : o))
       );
-      setFilteredOrders((prev) =>
-        prev.map((o) => (o.id === selectedOrder.id ? selectedOrder : o))
-      );
-
-      closeEditModal();
+      toast.success("Order updated successfully.");
+      handleCloseModal();
     } catch (err) {
-      console.error("Error saving order:", err);
+      toast.error("Failed to save order.");
     }
   };
 
-  // Update stock and order status for a single order
-  const handleToggleDelivered = async (order, checked) => {
-    const orderRef = doc(db, "orders", order.id);
+  /** Delete order */
+  const handleDelete = async (order) => {
+    if (!window.confirm("Are you sure you want to delete this order?")) return;
+    try {
+      await deleteOrder(order.userId, order.id);
 
-    const productUpdates =
-      order.products?.map(async (product) => {
-        const productRef = doc(db, "products", product.id);
-        await updateDoc(productRef, {
-          stock: checked
-            ? increment(-product.quantity)
-            : increment(product.quantity),
-        });
-      }) || [];
-
-    await Promise.all(productUpdates);
-    await updateDoc(orderRef, {
-      orderStatus: checked ? "Delivered" : "Pending",
-    });
-
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === order.id
-          ? { ...o, orderStatus: checked ? "Delivered" : "Pending" }
-          : o
-      )
-    );
-    setFilteredOrders((prev) =>
-      prev.map((o) =>
-        o.id === order.id
-          ? { ...o, orderStatus: checked ? "Delivered" : "Pending" }
-          : o
-      )
-    );
+      setOrders((prev) => prev.filter((o) => o.id !== order.id));
+      toast.success("Order deleted successfully.");
+    } catch (err) {
+      toast.error("Failed to delete order.");
+    }
   };
 
-  // Bulk update for current page only
-  const handleBulkDeliveredOnPage = async (checked) => {
-    const updates = currentData.map(async (order) => {
-      const orderRef = doc(db, "orders", order.id);
+  /** Toggle delivered status */
+  const handleToggleDelivered = async (order, checked) => {
+    try {
+      await toggleDeliveredStatus(order.userId, order, checked);
 
-      const productUpdates =
-        order.products?.map(async (product) => {
-          const productRef = doc(db, "products", product.id);
-          await updateDoc(productRef, {
-            stock: checked
-              ? increment(-product.quantity)
-              : increment(product.quantity),
-          });
-        }) || [];
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? { ...o, status: checked ? "Delivered" : "Pending" }
+            : o
+        )
+      );
+      toast.success(`Order marked as ${checked ? "Delivered" : "Pending"}`);
+    } catch (err) {
+      toast.error("Failed to update status.");
+    }
+  };
 
-      await Promise.all(productUpdates);
-      await updateDoc(orderRef, {
-        orderStatus: checked ? "Delivered" : "Pending",
-      });
-    });
-
-    await Promise.all(updates);
-
-    setOrders((prev) =>
-      prev.map((o) =>
-        currentData.some((cd) => cd.id === o.id)
-          ? { ...o, orderStatus: checked ? "Delivered" : "Pending" }
-          : o
-      )
-    );
-
-    setFilteredOrders((prev) =>
-      prev.map((o) =>
-        currentData.some((cd) => cd.id === o.id)
-          ? { ...o, orderStatus: checked ? "Delivered" : "Pending" }
-          : o
-      )
-    );
+  const handleBulkDelivered = async (checked) => {
+    try {
+      await bulkUpdateDelivered(currentData, checked);
+      setOrders((prev) =>
+        prev.map((o) =>
+          currentData.some((cd) => cd.id === o.id)
+            ? { ...o, status: checked ? "Delivered" : "Pending" }
+            : o
+        )
+      );
+      toast.success(
+        `Selected orders marked as ${checked ? "Delivered" : "Pending"}`
+      );
+    } catch (err) {
+      toast.error("Failed to bulk update orders.");
+    }
   };
 
   return (
@@ -286,7 +244,7 @@ function OrdersPage() {
       <div className="orders-filters">
         <h3>Filter Orders</h3>
         <div className="date-filters">
-          <div className="date-filter">
+          <div className="date-filter mb-3">
             <p>Start Date</p>
             <input
               type="date"
@@ -294,7 +252,7 @@ function OrdersPage() {
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
-          <div className="date-filter">
+          <div className="date-filter mb-3">
             <p>End Date</p>
             <input
               type="date"
@@ -302,7 +260,7 @@ function OrdersPage() {
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
-          <div className="date-filter">
+          <div className="date-filter mt-3">
             <p>Payment Status</p>
             <select
               value={paymentFilter}
@@ -313,7 +271,7 @@ function OrdersPage() {
               <option value="Pending">Unpaid</option>
             </select>
           </div>
-          <div className="date-filter">
+          <div className="date-filter mt-3">
             <p>Order Status</p>
             <select
               value={orderStatusFilter}
@@ -332,23 +290,21 @@ function OrdersPage() {
       <div className="orders-table-section">
         {loading ? (
           <div className="loader"></div>
-        ) : currentData.length > 0 ? (
+        ) : currentData.length === 0 ? (
+          <p>No orders found.</p>
+        ) : (
           <table className="orders-table">
             <thead>
               <tr>
                 <th>
                   <input
                     type="checkbox"
-                    checked={currentData.every(
-                      (o) => o.orderStatus === "Delivered"
-                    )}
-                    onChange={(e) =>
-                      handleBulkDeliveredOnPage(e.target.checked)
-                    }
+                    checked={currentData.every((o) => o.status === "Delivered")}
+                    onChange={(e) => handleBulkDelivered(e.target.checked)}
                   />
                 </th>
                 <th>Order ID</th>
-                <th>User</th>
+                <th>Username</th>
                 <th>Total Amount</th>
                 <th>Payment Status</th>
                 <th>Order Status</th>
@@ -357,8 +313,14 @@ function OrdersPage() {
             </thead>
             <tbody>
               {currentData.map((order) => {
-                const isPaid = order.paymentStatus === "Paid";
-                const orderStatus = isPaid ? "Delivered" : order.orderStatus;
+                const fullName = `${order.billing?.firstName || ""} ${
+                  order.billing?.lastName || ""
+                }`;
+                const isPaid =
+                  order.status === "paid" || order.paymentMethod !== "cod";
+                const orderStatus = isPaid
+                  ? "Delivered"
+                  : order.status || "Pending";
 
                 return (
                   <tr key={order.id}>
@@ -373,8 +335,8 @@ function OrdersPage() {
                       />
                     </td>
                     <td>{order.id}</td>
-                    <td>{order.user}</td>
-                    <td>${order.totalAmount?.toLocaleString() || 0}</td>
+                    <td>{fullName}</td>
+                    <td>₹ {order.total?.toLocaleString() || 0}</td>
                     <td>
                       <span
                         className={`order-status ${isPaid ? "paid" : "unpaid"}`}
@@ -401,7 +363,7 @@ function OrdersPage() {
                       <button
                         className="btn edit"
                         onClick={() => handleEdit(order)}
-                        disabled={isPaid}
+                        disabled={isPaid || orderStatus === "Delivered"}
                         title={
                           isPaid || orderStatus === "Delivered"
                             ? "Delivered orders cannot be edited"
@@ -422,50 +384,46 @@ function OrdersPage() {
               })}
             </tbody>
           </table>
-        ) : (
-          <p>No orders found.</p>
         )}
 
-        {/* Pagination */}
         <div className="pagination">
           <button
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
+            onClick={() => setCurrentPage((p) => p - 1)}
           >
             Previous
           </button>
-          {[...Array(totalPages)].map((_, index) => (
+          {[...Array(totalPages)].map((_, i) => (
             <button
-              key={index}
-              className={currentPage === index + 1 ? "active" : ""}
-              onClick={() => setCurrentPage(index + 1)}
+              key={i}
+              className={currentPage === i + 1 ? "active" : ""}
+              onClick={() => setCurrentPage(i + 1)}
             >
-              {index + 1}
+              {i + 1}
             </button>
           ))}
           <button
             disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
+            onClick={() => setCurrentPage((p) => p + 1)}
           >
             Next
           </button>
         </div>
       </div>
 
-      {/* Edit Modal */}
       {editModalOpen && selectedOrder && (
-        <div className="modal-overlay" onClick={closeEditModal}>
+        <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Order</h2>
             <label>
               Order Status:
               <select
-                value={selectedOrder.orderStatus || "Pending"}
+                value={selectedOrder.status || "Pending"}
                 onChange={(e) =>
-                  setSelectedOrder({
-                    ...selectedOrder,
-                    orderStatus: e.target.value,
-                  })
+                  setSelectedOrder((s) => ({
+                    ...s,
+                    status: e.target.value,
+                  }))
                 }
               >
                 <option value="Pending">Pending</option>
@@ -478,14 +436,16 @@ function OrdersPage() {
             <label>
               Payment Status:
               <select
-                value={selectedOrder.paymentStatus || "Pending"}
-                disabled={selectedOrder.paymentStatus === "Paid"}
+                value={
+                  selectedOrder.paymentMethod === "cod" ? "Pending" : "Paid"
+                }
+                disabled={selectedOrder.paymentMethod !== "cod"}
                 onChange={(e) =>
-                  setSelectedOrder({
-                    ...selectedOrder,
-                    paymentStatus:
-                      e.target.value === "Unpaid" ? "Pending" : e.target.value,
-                  })
+                  setSelectedOrder((s) => ({
+                    ...s,
+                    paymentMethod:
+                      e.target.value === "Pending" ? "cod" : "online",
+                  }))
                 }
               >
                 <option value="Pending">Unpaid</option>
@@ -495,7 +455,7 @@ function OrdersPage() {
 
             <div className="modal-buttons">
               <button onClick={handleSaveEdit}>Save</button>
-              <button onClick={closeEditModal}>Cancel</button>
+              <button onClick={handleCloseModal}>Cancel</button>
             </div>
           </div>
         </div>

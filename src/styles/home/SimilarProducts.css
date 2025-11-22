@@ -1,0 +1,95 @@
+.similar-products-section {
+  margin: 40px 10px;
+  position: relative;
+}
+
+.sp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.similar-products-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.sp-arrows {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sp-arrow-btn {
+  background: #fbae17;
+  color: #fff;
+  border: none;
+  padding: 13px;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sp-arrow-btn:hover {
+  background: #0f2a6a;
+}
+
+.sp-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  gap: 1rem;
+  padding: 0 10px;
+}
+
+.sp-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.sp-card {
+  flex: 0 0 auto;
+  width: 180px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  text-align: center;
+  padding: 10px;
+}
+
+.sp-card:hover {
+  transform: translateY(-5px);
+}
+
+.sp-img-wrapper {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.sp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sp-info {
+  margin-top: 8px;
+}
+
+.sp-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.sp-price {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}

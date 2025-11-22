@@ -5,7 +5,7 @@ const highlights = [
   { icon: <FaTruck />, text: "Same day Delivery" },
   { icon: <FaSmile />, text: "100% Customer Satisfaction" },
   { icon: <FaHandsHelping />, text: "Help and access is our mission" },
-  { icon: <FaCar />, text: "100% quality Car Accessories" },
+  { icon: <FaCar />, text: "100% quality Accessories" },
   { icon: <FaHeadset />, text: "24/7 Support for Clients" },
 ];
 

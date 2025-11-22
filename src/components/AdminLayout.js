@@ -1,6 +1,6 @@
 import React from "react";
 import AdminSidebar from "./AdminSidebar";
-import Navbar from "./Navbar";
+import AdminNavbar from "./AdminNavbar";
 import { useSidebar } from "../contexts/SidebarContext";
 
 const AdminLayout = ({ children }) => {
@@ -19,7 +19,7 @@ const AdminLayout = ({ children }) => {
 
       <div style={styles.main(isSidebarOpen)}>
         <div style={styles.navbar}>
-          <Navbar />
+          <AdminNavbar />
         </div>
         <div style={styles.content}>{children}</div>
       </div>
@@ -70,10 +70,9 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     padding: "24px 0",
-    boxShadow: "2px 0 16px rgba(44, 62, 80, 0.08)",
     borderBottomRightRadius: "20px",
     position: "fixed",
-    top: "56px",
+    top: 0,
     left: 0,
     zIndex: 1100,
     transition: "transform 0.3s ease, width 0.3s ease",

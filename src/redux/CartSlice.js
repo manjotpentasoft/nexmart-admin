@@ -1,13 +1,6 @@
+// src/redux/cartSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import { db } from "../firebase/firebaseConfig";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  updateDoc,
-  deleteDoc,
-  setDoc,
-} from "firebase/firestore";
+import * as cartService from "../firebase/cartService";
 
 const initialState = {
   cartItems: [],
@@ -15,7 +8,6 @@ const initialState = {
   coupon: "",
   subtotal: 0,
   total: 0,
-  userId: null, // can be replaced with auth.uid
 };
 
 const cartSlice = createSlice({
@@ -34,58 +26,48 @@ const cartSlice = createSlice({
       state.shippingCost = Number(action.payload);
       state.total = state.subtotal + state.shippingCost;
     },
-    setCoupon: (state, action) => {
+    setCoupon: (state, action) => {  
       state.coupon = action.payload;
+    },
+    clearCartState: (state) => {
+      state.cartItems = [];
+      state.subtotal = 0;
+      state.total = 0;
     },
   },
 });
 
-export const { setCartItems, setShippingCost, setCoupon } = cartSlice.actions;
+export const { setCartItems, setShippingCost, clearCartState, setCoupon } = cartSlice.actions;
 export default cartSlice.reducer;
 
-/* ------------------- Firebase Actions ------------------- */
+/* ------------------- Redux Thunks ------------------- */
 
-// Subscribe to realtime cart updates
-export const subscribeToCart = (userId) => (dispatch) => {
-  const cartRef = collection(db, "users", userId, "cart");
-
-  // onSnapshot returns an unsubscribe function (not a promise)
-  const unsubscribe = onSnapshot(cartRef, (snapshot) => {
-    const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+// Subscribe to realtime updates
+export const subscribeCart = (userId) => (dispatch) => {
+  const unsubscribe = cartService.subscribeToCart(userId, (items) => {
     dispatch(setCartItems(items));
   });
-
   return unsubscribe;
 };
 
+// Add item to cart
+export const addToCart = (userId, product) => async (dispatch) => {
+  await cartService.saveCartItem(userId, { ...product, quantity: product.quantity || 1 });
+  // realtime subscription will update state automatically
+};
 
-// Update item quantity in Firestore
-export const updateQuantity = (userId, id, quantity) => {
-  const ref = doc(db, "users", userId, "cart", id);
-  return updateDoc(ref, { quantity });
+// Update quantity
+export const updateQuantity = (userId, id, quantity) => async (dispatch) => {
+  await cartService.saveCartItem(userId, { id, quantity });
 };
 
 // Remove item
-export const removeFromCart = (userId, id) => {
-  const ref = doc(db, "users", userId, "cart", id);
-  return deleteDoc(ref);
+export const removeFromCart = (userId, itemId) => async (dispatch) => {
+  await cartService.removeCartItem(userId, itemId);
 };
 
-export const addToCart = (userId, product) => async (dispatch) => {
-  try {
-    if (!userId || !product || !product.id) {
-      console.error("Invalid product or userId:", { userId, product });
-      return;
-    }
-
-    const ref = doc(db, "users", userId, "cart", product.id);
-    await setDoc(
-      ref,
-      { ...product, quantity: product.quantity || 1 },
-      { merge: true }
-    );
-
-  } catch (err) {
-    console.error("Error adding to cart:", err);
-  }
+// Clear cart
+export const clearCart = (userId) => async (dispatch) => {
+  await cartService.clearCartInFirestore(userId);
+  dispatch(clearCartState());
 };

@@ -1,92 +1,107 @@
+// brandsService.js
 import { db } from "./firebaseConfig";
+import { fileToBase64 } from "./firestoreService";
 import {
   collection,
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   doc,
+  serverTimestamp
 } from "firebase/firestore";
-import { fileToBase64 } from "./firestoreService";
+import { batchUpdateLinkedProducts, safeDeleteEntity } from "./firestoreService";
+import FIREBASE_SCHEMA from "../constants/firebaseSchema";
+
+const { COLLECTIONS, BRAND_FIELDS, PRODUCT_FIELDS } = FIREBASE_SCHEMA;
 
 /**
- * Fetch all brands (from products + brands collection)
- * Returns an array of { id, name, logo, productIds }
+ * Fetch brands by merging product brand names and brands collection
+ * Returns array of { id, name, logo, productIds }
  */
 export const fetchBrands = async () => {
-  // Step 1: Gather brands from products
-  const productSnapshot = await getDocs(collection(db, "products"));
+  const productSnapshot = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
   const brandMap = new Map();
 
-  productSnapshot.forEach((doc) => {
-    const data = doc.data();
-    if (data.brand) {
-      const name = data.brand.trim();
-      if (!brandMap.has(name))
-        brandMap.set(name, {
-          id: null,
-          name,
-          productIds: [doc.id],
-          logo: null,
-        });
-      else brandMap.get(name).productIds.push(doc.id);
+  productSnapshot.forEach((p) => {
+    const data = p.data();
+    if (data?.[PRODUCT_FIELDS.BRAND]) {
+      const name = data[PRODUCT_FIELDS.BRAND].trim();
+      const entry =
+        brandMap.get(name) || {
+          [BRAND_FIELDS.ID]: null,
+          [BRAND_FIELDS.NAME]: name,
+          productIds: [],
+          [BRAND_FIELDS.LOGO]: null,
+        };
+      entry.productIds.push(p.id);
+      brandMap.set(name, entry);
     }
   });
 
-  // Step 2: Merge existing brands collection (logos, IDs)
-  const brandsSnapshot = await getDocs(collection(db, "brands"));
-  brandsSnapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    if (brandMap.has(data.name)) {
-      brandMap.get(data.name).logo = data.logo || null;
-      brandMap.get(data.name).id = docSnap.id;
-      // Ensure productIds always exists
-      if (!brandMap.get(data.name).productIds)
-        brandMap.get(data.name).productIds = [];
+  const brandsSnapshot = await getDocs(collection(db, COLLECTIONS.BRANDS));
+  brandsSnapshot.forEach((b) => {
+    const data = b.data();
+    const name = data?.[BRAND_FIELDS.NAME] || "";
+    if (brandMap.has(name)) {
+      const entry = brandMap.get(name);
+      entry[BRAND_FIELDS.LOGO] = data[BRAND_FIELDS.LOGO] || null;
+      entry[BRAND_FIELDS.ID] = b.id;
+      entry.productIds = entry.productIds || [];
     } else {
-      brandMap.set(data.name, {
-        id: docSnap.id,
-        name: data.name,
-        logo: data.logo || null,
-        productIds: [], // Always initialize
+      brandMap.set(name, {
+        [BRAND_FIELDS.ID]: b.id,
+        [BRAND_FIELDS.NAME]: name,
+        [BRAND_FIELDS.LOGO]: data[BRAND_FIELDS.LOGO] || null,
+        productIds: [],
       });
     }
   });
+
   return Array.from(brandMap.values());
 };
 
 /**
- * Add a new brand document
+ * Add a new brand
  */
 export const addBrand = async (name, logoFile) => {
   const logoBase64 = logoFile ? await fileToBase64(logoFile) : null;
-  const ref = await addDoc(collection(db, "brands"), {
-    name: name.trim(),
-    logo: logoBase64,
-    createdAt: new Date(),
+  const ref = await addDoc(collection(db, COLLECTIONS.BRANDS), {
+    [BRAND_FIELDS.NAME]: name.trim(),
+    [BRAND_FIELDS.LOGO]: logoBase64,
+    [BRAND_FIELDS.CREATED_AT]: serverTimestamp(),
   });
   return ref.id;
 };
 
 /**
- * Update an existing brand document
+ * Update an existing brand
+ * Automatically updates linked products
  */
 export const updateBrand = async (brand) => {
-  if (!brand.id) throw new Error("Brand ID is required to update");
+  if (!brand[BRAND_FIELDS.ID]) throw new Error("Brand ID is required to update");
+
   const logoBase64 =
-    brand.logo instanceof File
-      ? await fileToBase64(brand.logo)
-      : brand.logo || null;
-  await updateDoc(doc(db, "brands", brand.id), {
-    name: brand.name,
-    logo: logoBase64,
+    brand[BRAND_FIELDS.LOGO] instanceof File
+      ? await fileToBase64(brand[BRAND_FIELDS.LOGO])
+      : brand[BRAND_FIELDS.LOGO] || null;
+
+  await updateDoc(doc(db, COLLECTIONS.BRANDS, brand[BRAND_FIELDS.ID]), {
+    [BRAND_FIELDS.NAME]: brand[BRAND_FIELDS.NAME],
+    [BRAND_FIELDS.LOGO]: logoBase64,
+  });
+
+  // Update all products linked to this brand
+  await batchUpdateLinkedProducts({
+    type: "brand",
+    id: brand[BRAND_FIELDS.ID],
+    newName: brand[BRAND_FIELDS.NAME],
   });
 };
 
 /**
- * Delete a brand document
+ * Delete a brand
+ * Automatically checks for linked products
  */
-export const deleteBrand = async (brand) => {
-  if (!brand.id) return;
-  await deleteDoc(doc(db, "brands", brand.id));
+export const deleteBrand = async (brandId, cascade = false) => {
+  await safeDeleteEntity({ type: "brand", id: brandId, cascade });
 };

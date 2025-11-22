@@ -1,38 +1,56 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/AdminLayout";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  getDoc,
+  doc,
+  onSnapshot,
+} from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import "../../styles/CustomerDetailsPage.css";
 
 const CustomerDetailsPage = () => {
-  const { id } = useParams(); // id = customer email
+  const { id } = useParams(); // id = userId from /admin/customers/:id
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [customerInfo, setCustomerInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, "orders"), where("shipping.email", "==", id));
+    if (!id) return;
 
+    //  Fetch customer info
+    const fetchCustomerInfo = async () => {
+      try {
+        const userRef = doc(db, "users", id);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setCustomerInfo({
+            name: userSnap.data().name || "Unknown",
+            email: userSnap.data().email || "-",
+            phone: userSnap.data().phone || "-",
+          });
+        } else {
+          setCustomerInfo(null);
+        }
+      } catch (err) {
+        console.error("Error fetching customer info:", err);
+      }
+    };
+
+    //  Real-time subscription to user's orders
+    const ordersRef = collection(db, "users", id, "orders");
     const unsubscribe = onSnapshot(
-      q,
+      ordersRef,
       (snapshot) => {
         const ordersData = snapshot.docs
           .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-          .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
+          .sort(
+            (a, b) =>
+              (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+          );
         setOrders(ordersData);
-
-        if (ordersData.length > 0) {
-          const shipping = ordersData[0].shipping || {};
-          setCustomerInfo({
-            name: shipping.name || "Unknown",
-            email: shipping.email || "-",
-            phone: shipping.phone || "-",
-          });
-        }
-
         setLoading(false);
       },
       (error) => {
@@ -41,14 +59,24 @@ const CustomerDetailsPage = () => {
       }
     );
 
+    fetchCustomerInfo();
+
     return () => unsubscribe();
   }, [id]);
 
   if (loading) return <div className="loader"></div>;
-  if (!customerInfo) return <p>No orders found for this customer.</p>;
+  if (!customerInfo)
+    return (
+      <AdminLayout>
+        <p style={{ padding: "20px" }}>No customer found.</p>
+      </AdminLayout>
+    );
 
   const calculateTotalItems = (order) =>
-    (order.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
+    (order.products || []).reduce(
+      (sum, item) => sum + (item.quantity || 0),
+      0
+    );
 
   return (
     <AdminLayout>
@@ -97,27 +125,33 @@ const CustomerDetailsPage = () => {
                 <tr key={order.id}>
                   <td
                     style={{ cursor: "pointer", color: "#4299e1" }}
-                    onClick={() => navigate(`/admin/orders/invoice/₹{order.id}`)}
+                    onClick={() =>
+                      navigate(`/admin/orders/${order.id}`)
+                    }
                   >
                     {order.id}
                   </td>
                   <td>
                     {order.createdAt
-                      ? new Date(order.createdAt.seconds * 1000).toLocaleDateString()
+                      ? new Date(
+                          order.createdAt.seconds * 1000
+                        ).toLocaleDateString()
                       : "N/A"}
                   </td>
                   <td>
                     <span
-                      className={`order-status-badge ₹{
-                        order.orderStatus?.toLowerCase() || "pending"
+                      className={`order-status-badge ${
+                        order.status?.toLowerCase() || "pending"
                       }`}
                     >
-                      {order.orderStatus || "Pending"}
+                      {order.status || "Pending"}
                     </span>
                   </td>
-                  <td>{(order.items || []).length}</td>
+                  <td>{(order.products || []).length}</td>
                   <td>{calculateTotalItems(order)}</td>
-                  <td>₹{order.totalAmount?.toLocaleString() || 0}</td>
+                  <td>
+                    ₹{order.total?.toLocaleString() || "0"}
+                  </td>
                 </tr>
               ))
             ) : (

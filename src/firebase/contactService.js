@@ -1,41 +1,42 @@
-// src/firebase/contactService.js
-import { collection, getDocs, addDoc, orderBy, query, serverTimestamp } from "firebase/firestore";
+// contactService.js
+import {
+  collection,
+  getDocs,
+  addDoc,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "./firebaseConfig";
+import FIREBASE_SCHEMA from "../constants/firebaseSchema";
 
-/**
- * Fetch all contact messages from Firestore, ordered by createdAt descending
- */
+const { COLLECTIONS, CONTACT_MESSAGE_FIELDS } = FIREBASE_SCHEMA;
+
+/** Fetch contact messages ordered by createdAt (descending) */
 export const fetchContacts = async () => {
   try {
     const q = query(
-      collection(db, "contactMessages"),
-      orderBy("createdAt", "desc")
+      collection(db, COLLECTIONS.CONTACT_MESSAGES),
+      orderBy(CONTACT_MESSAGE_FIELDS.CREATED_AT, "desc")
     );
-    const querySnapshot = await getDocs(q);
-    const data = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    return data;
-  } catch (error) {
-    console.error("Error fetching contacts:", error);
-    throw error;
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.error("Error fetching contacts:", err);
+    throw err;
   }
 };
 
-/**
- * Add a new contact message to Firestore
- * @param {Object} contactData - { name, email, phone, subject, message }
- */
+/** Add a new contact message */
 export const addContactMessage = async (contactData) => {
   try {
-    await addDoc(collection(db, "contactMessages"), {
+    await addDoc(collection(db, COLLECTIONS.CONTACT_MESSAGES), {
       ...contactData,
-      createdAt: serverTimestamp(),
+      [CONTACT_MESSAGE_FIELDS.CREATED_AT]: serverTimestamp(),
     });
     return true;
-  } catch (error) {
-    console.error("Error adding contact message:", error);
-    throw error;
+  } catch (err) {
+    console.error("Error adding contact message:", err);
+    throw err;
   }
 };

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { FaEye, 
-  // FaTrash
- } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 import AdminLayout from "../../components/AdminLayout";
 import "../../styles/OrdersPage.css";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 
@@ -19,36 +17,28 @@ const CustomersListPage = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "orders"),
-      (snapshot) => {
-        const customerMap = new Map();
-
-        snapshot.docs.forEach((docSnap) => {
-          const order = docSnap.data();
-          const shipping = order.shipping || {};
-          const email = (shipping.email || "").toLowerCase();
-          if (!email) return;
-
-          if (!customerMap.has(email)) {
-            customerMap.set(email, {
-              name: shipping.name || "Unknown",
-              email,
-              phone: shipping.phone || "-",
-            });
-          }
+    const fetchCustomers = async () => {
+      try {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        const customersData = usersSnapshot.docs.map((docSnap) => {
+          const user = docSnap.data();
+          return {
+            id: docSnap.id,
+            name: user.name || "Unknown",
+            email: user.email || "-",
+            phone: user.phone || "-",
+          };
         });
 
-        setCustomers(Array.from(customerMap.values()));
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching orders:", error);
+        setCustomers(customersData);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    fetchCustomers();
   }, []);
 
   // Filter by search
@@ -100,23 +90,17 @@ const CustomersListPage = () => {
             <tbody>
               {currentCustomers.length > 0 ? (
                 currentCustomers.map((c) => (
-                  <tr key={c.email}>
+                  <tr key={c.id}>
                     <td>{c.name}</td>
                     <td>{c.email}</td>
                     <td>{c.phone}</td>
                     <td className="actions">
                       <button
                         className="view"
-                        onClick={() => navigate(`/admin/customers/${c.email}`)}
+                        onClick={() => navigate(`/admin/customers/${c.id}`)}
                       >
                         <FaEye />
                       </button>
-                      {/* <button
-                        className="delete"
-                        // onClick={() => handleDeleteCustomer(c.id)}
-                      >
-                        <FaTrash />
-                      </button> */}
                     </td>
                   </tr>
                 ))

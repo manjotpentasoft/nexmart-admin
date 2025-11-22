@@ -1,25 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { fetchCollection } from "../../firebase/firestoreService";
+import { getCollectionOnce } from "../../firebase/firestoreService";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/CartSlice";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../../styles/home/HomeTopSold.css";
 import bgImage from "../../assets/cta-bg.jpg";
+import { auth } from "../../firebase/firebaseConfig";
 
 export default function HomeTopSold() {
   const dispatch = useDispatch();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]); // dynamic categories
   const [filter, setFilter] = useState("All");
-  const userId = "demoUser"; // Replace with auth.uid if using Firebase Auth
+  const userId = auth.currentUser?.uid;
 
   //  Load products and categories
   useEffect(() => {
     const loadData = async () => {
       try {
-        const allProducts = await fetchCollection("products");
-        const allCategories = await fetchCollection("categories");
+        const allProducts = await getCollectionOnce("products");
+        const allCategories = await getCollectionOnce("categories");
 
         setCategories(allCategories.map((c) => c.name));
 
@@ -64,8 +65,6 @@ export default function HomeTopSold() {
 
   return (
     <div className="hotsold-container">
-      <ToastContainer position="bottom-right" autoClose={2500} hideProgressBar />
-
       {/* Hero Section */}
       <section
         className="hotsold-hero"

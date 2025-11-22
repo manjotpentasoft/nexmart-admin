@@ -31,12 +31,12 @@
   gap: 16px;
 }
 
-.search-container {
+.categories-search-container {
   display: flex;
   gap: 8px;
 }
 
-.search-container input {
+.categories-search-container input {
   padding: 8px 12px;
   border: 1px solid #cbd5e0;
   background: #fff;
@@ -357,7 +357,7 @@
     align-items: stretch;
   }
 
-  .search-container {
+  .categories-search-container {
     max-width: 100%;
   }
 
@@ -452,32 +452,7 @@
   border-radius: 4px;
 }
 
-/* -------------------------------Sub categories--------------------------------------------- */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #4a5568;
-  font-weight: 500;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #4299e1;
-}
+/* ---------Sub categories----------- */
 
 .table-footer {
   margin-top: 16px;
@@ -498,7 +473,7 @@
 
 .form-group input,
 .form-group select {
-  width: 100%;
+  width: 90%;
   padding: 10px 12px;
   border: 1px solid #cbd5e0;
   border-radius: 6px;

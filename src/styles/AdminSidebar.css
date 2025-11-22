@@ -1,6 +1,6 @@
 .admin-dashboard-sidebar {
   position: fixed;
-  top: 56px; /* height of navbar */
+  top: 56px;
   left: 0;
   bottom: 0; /* makes it reach the very bottom */
   width: 240px;

@@ -20,6 +20,7 @@ import {
   query,
   orderBy,
   getDocs,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import dayjs from "dayjs";
@@ -70,7 +71,7 @@ export default function AdminDashboard() {
             data.paymentMethod || data.items?.[0]?.paymentMethod || "N/A",
           total: data.totalAmount || 0,
           orderStatus: data.orderStatus || "Pending",
-          createdAt: data.createdAt?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || serverTimestamp(),
         };
       });
 

@@ -1,23 +1,20 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ProductsPage from "./pages/admin/manage-products/Products";
-import OrdersPage from "./pages/admin/Orders";
-import AdminDashboard from "./pages/admin/Dashboard";
-import CategoriesPage from "./pages/admin/categories-manage/Categories";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
-import MyProfile from "./pages/admin/profile/MyProfile";
-import NotificationsPage from "./pages/admin/Notifications";
-import PrivateRoute from "./components/PrivateRoute";
-import { AuthProvider } from "./contexts/AuthContext";
-import Login from "./pages/LoginPage";
-import SubCategoriesPage from "./pages/admin/categories-manage/SubCategories";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/Dashboard";
+import OrdersPage from "./pages/admin/Orders";
+import ProductsPage from "./pages/admin/manage-products/Products";
 import BrandsPage from "./pages/admin/manage-products/Brands";
 import AddProductPage from "./pages/admin/manage-products/add-product/page";
-import CreateDigitalProduct from "./pages/admin/manage-products/add-product/PhysicalProduct";
+import CreateDigitalProduct from "./pages/admin/manage-products/add-product/DigitalProduct";
 import CreatePhysicalProduct from "./pages/admin/manage-products/add-product/PhysicalProduct";
 import StockOutProductsPage from "./pages/admin/manage-products/StockOutProductsPage";
-import ChangePassword from "./pages/admin/profile/ChangePassword";
-import OrderInvoice from "./components/OrderInvoice";
+import CategoriesPage from "./pages/admin/categories-manage/Categories";
+import SubCategoriesPage from "./pages/admin/categories-manage/SubCategories";
 import CouponsPage from "./pages/admin/ecommerce/CouponsPage";
 import ShippingPage from "./pages/admin/ecommerce/ShippingPage";
 import StateChargePage from "./pages/admin/ecommerce/StateChargePage";
@@ -25,239 +22,117 @@ import TaxPage from "./pages/admin/ecommerce/TaxPage";
 import CurrencyPage from "./pages/admin/ecommerce/CurrencyPage";
 import CustomersListPage from "./pages/admin/CustomerListPage";
 import CustomerDetailsPage from "./pages/admin/CustomerDetailsPage";
-import Signup from "./pages/SignupPage";
-import PublicRoute from "./components/PublicRoute";
-import ManagePages from "./pages/admin/ManagePages";
+import MyProfile from "./pages/admin/profile/MyProfile";
+import ChangePassword from "./pages/admin/profile/ChangePassword";
+import NotificationsPage from "./pages/admin/Notifications";
 import SlidersPage from "./pages/admin/manage-site/Sliders";
-import ProductView from "./pages/home/ProductView";
+import ManagePages from "./pages/admin/ManagePages";
+import ContactsPage from "./pages/admin/ContactsPage";
+import OrderInvoice from "./components/OrderInvoice";
+
+// User Pages
 import HomePage from "./pages/home/HomePage";
-import CartPage from "./pages/home/CartPage";
 import ShopPage from "./pages/home/ShopPage";
+import ProductView from "./pages/home/ProductView";
+import CartPage from "./pages/home/CartPage";
+import WishlistPage from "./pages/home/WishlistPage";
+import CheckoutPage from "./pages/home/CheckoutPage";
+import UserAccountPage from "./pages/home/UserAccountPage";
 import AboutPage from "./pages/home/AboutPage";
 import ContactPage from "./pages/home/ContactPage";
-import ContactsPage from "./pages/admin/ContactsPage";
-import WishlistPage from "./pages/home/WishlistPage";
+
+// Auth Pages
+import Login from "./pages/LoginPage";
+import Signup from "./pages/SignupPage";
+import CategoryPage from "./pages/home/CategoryPage";
+
+// Environment variable for admin UID
+const ADMIN_UID = process.env.REACT_APP_ADMIN_UID;
+
+// Central AppRoutes Component
+function AppRoutes() {
+  const { user } = useAuth();
+
+  if (!user) return <Navigate to="/login" />;
+
+  return user.uid === ADMIN_UID ? <AdminPanel /> : <UserPanel />;
+}
+
+function AdminPanel() {
+  return (
+    <SidebarProvider>
+      <Routes>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/orders" element={<OrdersPage />} />
+        <Route path="/admin/orders/:orderId" element={<OrderInvoice />} />
+        <Route path="/admin/products" element={<ProductsPage />} />
+        <Route path="/admin/brand" element={<BrandsPage />} />
+        <Route path="/admin/create" element={<AddProductPage />} />
+        <Route path="/admin/create/physical" element={<CreatePhysicalProduct />} />
+        <Route path="/admin/create/digital" element={<CreateDigitalProduct />} />
+        <Route path="/admin/stock/out/product" element={<StockOutProductsPage />} />
+        <Route path="/admin/categories" element={<CategoriesPage />} />
+        <Route path="/admin/subcategories" element={<SubCategoriesPage />} />
+        <Route path="/admin/coupons" element={<CouponsPage />} />
+        <Route path="/admin/shipping" element={<ShippingPage />} />
+        <Route path="/admin/state-charge" element={<StateChargePage />} />
+        <Route path="/admin/currency" element={<CurrencyPage />} />
+        <Route path="/admin/tax" element={<TaxPage />} />
+        <Route path="/admin/customers" element={<CustomersListPage />} />
+        <Route path="/admin/customers/:id" element={<CustomerDetailsPage />} />
+        <Route path="/admin/profile" element={<MyProfile />} />
+        <Route path="/admin/change-password" element={<ChangePassword />} />
+        <Route path="/admin/notifications" element={<NotificationsPage />} />
+        <Route path="/admin/sliders" element={<SlidersPage />} />
+        <Route path="/admin/pages" element={<ManagePages />} />
+        <Route path="/admin/contacts" element={<ContactsPage />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+      </Routes>
+    </SidebarProvider>
+  );
+}
+
+function UserPanel() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/shop" element={<ShopPage />} />
+      <Route path="/category/:id" element={<CategoryPage />} />
+      <Route path="/product/view/:productId" element={<ProductView />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/account" element={<UserAccountPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
+  );
+}
 
 export default function App() {
   return (
-    <div className="App">
-      {/* <AuthProvider> */}
-      <SidebarProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
-            <Route path="/" element={<HomePage />} />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <PublicRoute>
-                  <Signup />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <PrivateRoute>
-                  <AdminDashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/orders"
-              element={
-                <PrivateRoute>
-                  <OrdersPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/orders/invoice/:orderId"
-              element={<OrderInvoice />}
-            />
-            <Route
-              path="/admin/products"
-              element={
-                <PrivateRoute>
-                  <ProductsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/brand"
-              element={
-                <PrivateRoute>
-                  <BrandsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/create"
-              element={
-                <PrivateRoute>
-                  <AddProductPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/create/physical"
-              element={
-                <PrivateRoute>
-                  <CreatePhysicalProduct />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/create/digital"
-              element={
-                <PrivateRoute>
-                  <CreateDigitalProduct />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/products"
-              element={
-                <PrivateRoute>
-                  <ProductsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/product/view/:productId" element={<ProductView />} />
-            <Route
-              path="/admin/stock/out/product"
-              element={
-                <PrivateRoute>
-                  <StockOutProductsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/categories"
-              element={
-                <PrivateRoute>
-                  <CategoriesPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/subcategories"
-              element={
-                <PrivateRoute>
-                  <SubCategoriesPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/coupons"
-              element={
-                <PrivateRoute>
-                  <CouponsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/shipping"
-              element={
-                <PrivateRoute>
-                  <ShippingPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/state-charge"
-              element={
-                <PrivateRoute>
-                  <StateChargePage />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/admin/currency" element={<CurrencyPage />} />
-            <Route
-              path="/admin/tax"
-              element={
-                <PrivateRoute>
-                  <TaxPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/customers"
-              element={
-                <PrivateRoute>
-                  <CustomersListPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/customers/:id"
-              element={<CustomerDetailsPage />}
-            />
-            <Route
-              path="/admin/profile"
-              element={
-                <PrivateRoute>
-                  <MyProfile />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/notifications"
-              element={
-                <PrivateRoute>
-                  <NotificationsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/change-password"
-              element={
-                <PrivateRoute>
-                  <ChangePassword />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/sliders"
-              element={
-                <PrivateRoute>
-                  <SlidersPage />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/pages"
-              element={
-                <PrivateRoute>
-                  <ManagePages />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin/contacts"
-              element={
-                <PrivateRoute>
-                  <ContactsPage />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/shop" element={<ShopPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
-          </Routes>
-        </BrowserRouter>
-      </SidebarProvider>
-      {/* </AuthProvider> */}
-    </div>
+    <AuthProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme="colored"
+      />
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Private/Admin/User Routes */}
+          <Route path="/*" element={<AppRoutes />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

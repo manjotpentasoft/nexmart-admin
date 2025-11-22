@@ -13,7 +13,7 @@ function StockOutProductsPage() {
   const [entriesToShow, setEntriesToShow] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 🔹 Real-time subscription
+  //  Real-time subscription
   useEffect(() => {
     const unsubscribe = subscribeToCollection("products", (allProducts) => {
       const outOfStock = allProducts.filter(
@@ -24,12 +24,12 @@ function StockOutProductsPage() {
     return () => unsubscribe();
   }, []);
 
-  // 🔹 Search filter
+  //  Search filter
   const filteredProducts = products.filter((p) =>
     p.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 🔹 Pagination
+  //  Pagination
   const totalPages = Math.ceil(filteredProducts.length / entriesToShow);
   const startIndex = (currentPage - 1) * entriesToShow;
   const paginatedProducts = filteredProducts.slice(
@@ -37,7 +37,7 @@ function StockOutProductsPage() {
     startIndex + entriesToShow
   );
 
-  // 🔹 Delete product
+  //  Delete product
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
@@ -52,28 +52,10 @@ function StockOutProductsPage() {
   return (
     <AdminLayout>
       <div className="stockout-header">
-        <div>
+        <div className="stockout-title">
           <h1>Stock Out Products</h1>
           <p>Manage products that are out of stock</p>
         </div>
-      </div>
-
-      {/* Controls */}
-      <div className="table-controls">
-        <div className="entries-selector">
-          <span>Show</span>
-          <select
-            value={entriesToShow}
-            onChange={(e) => setEntriesToShow(parseInt(e.target.value))}
-          >
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-          <span>entries</span>
-        </div>
-
         <div className="search-area">
           <input
             type="text"

@@ -1,10 +1,10 @@
 import AdminLayout from "../../../../components/AdminLayout";
-import ProductForm from "./CreateProduct";
+import ProductForm from "./ProductForm";
 
 export default function CreateDigitalProduct() {
   return (
     <AdminLayout>
-      <ProductForm productType="digital" />
+      <ProductForm key="digital" productType="digital" />
     </AdminLayout>
   );
 }

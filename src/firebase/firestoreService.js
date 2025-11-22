@@ -1,101 +1,185 @@
-import { db } from "./firebaseConfig";
 import {
   collection,
-  getDocs,
+  doc,
   getDoc,
+  getDocs,
   addDoc,
   updateDoc,
   deleteDoc,
-  doc,
+  query,
+  where,
+  writeBatch,
   onSnapshot,
-  setDoc,
+  orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
+import { db } from "./firebaseConfig";
+import { COLLECTIONS, SUBCOLLECTIONS } from "../constants/firebaseSchema";
 
-/**
- * Convert a file to base64 (for images/logos)
- */
-export const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
+export function subscribeToCollection(
+  collectionPath,
+  onUpdate,
+  constraints = [],
+  orderByField = null
+) {
+  const colRef = collection(db, collectionPath);
+  const clauses = [...constraints];
+  if (orderByField) clauses.push(orderBy(orderByField));
+  const q = query(colRef, ...clauses);
+
+  const unsubscribe = onSnapshot(q, (snap) => {
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    onUpdate(list);
+  });
+
+  return () => unsubscribe();
+ }
+
+export async function getDocument(collectionPath, id) {
+  const snap = await getDoc(doc(db, collectionPath, id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function getCollectionOnce(collectionPath, constraints = []) {
+  const colRef = collection(db, collectionPath);
+  const q = query(colRef, ...constraints);
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function createDocument(collectionPath, data) {
+  const payload = { ...data };
+  if (!payload.createdAt) payload.createdAt = serverTimestamp();
+  return addDoc(collection(db, collectionPath), payload);
+}
+
+export async function updateDocument(collectionPath, id, updates) {
+  if (!id) throw new Error("Missing document id");
+  return updateDoc(doc(db, collectionPath, id), updates);
+}
+
+export async function deleteDocument(collectionPath, id) {
+  return deleteDoc(doc(db, collectionPath, id));
+}
+
+export async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
+}
 
-/**
- * Fetch all documents from a collection once
- */
-export const fetchCollection = async (collectionName) => {
-  const snapshot = await getDocs(collection(db, collectionName));
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-};
-
-/**
- * Subscribe to real-time updates in a collection
- * @returns unsubscribe function
- */
-export const subscribeToCollection = (collectionName, callback) => {
-  const unsubscribe = onSnapshot(collection(db, collectionName), (snapshot) => {
-    const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(docs);
-  });
-  return unsubscribe;
-};
-
-/**
- * Get a single document by ID
- */
-export const fetchDocument = async (collectionName, id) => {
-  const ref = doc(db, collectionName, id);
-  const snapshot = await getDoc(ref);
-  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
-};
-
-/**
- * Add a new document
- */
-export const addDocument = async (collectionName, data) => {
-  const ref = await addDoc(collection(db, collectionName), {
-    ...data,
-    createdAt: new Date(),
-  });
-  return ref.id;
-};
-
-/**
- * Update an existing document
- */
-export const updateDocument = async (collectionName, id, data) => {
-  const ref = doc(db, collectionName, id);
-  await updateDoc(ref, data);
-};
-
-/* Delete a document */
-export const deleteDocument = async (collectionName, id) => {
-  await deleteDoc(doc(db, collectionName, id));
-};
-
-export const saveCartToFirestore = async (userId, cartItems) => {
-  if (!userId) return;
-  try {
-    const cartRef = doc(db, "carts", userId);
-    await setDoc(cartRef, { items: cartItems }, { merge: true });
-  } catch (error) {
-    console.error("Error saving cart:", error);
+export async function validateProductReferences({
+  brandId,
+  categoryId,
+  subcategoryId,
+}) {
+  const errors = [];
+  if (brandId) {
+    const snap = await getDoc(doc(db, COLLECTIONS.BRANDS, brandId));
+    if (!snap.exists()) errors.push("Invalid brand selected.");
   }
-};
-
-export const getCartFromFirestore = async (userId) => {
-  if (!userId) return [];
-  try {
-    const cartRef = doc(db, "carts", userId);
-    const docSnap = await getDoc(cartRef);
-    if (docSnap.exists()) {
-      return docSnap.data().items || [];
-    }
-    return [];
-  } catch (error) {
-    console.error("Error fetching cart:", error);
-    return [];
+  if (categoryId) {
+    const snap = await getDoc(doc(db, COLLECTIONS.CATEGORIES, categoryId));
+    if (!snap.exists()) errors.push("Invalid category selected.");
   }
-};
+  if (subcategoryId && categoryId) {
+    const snap = await getDoc(
+      doc(
+        db,
+        `${COLLECTIONS.CATEGORIES}/${categoryId}/${SUBCOLLECTIONS.SUBCATEGORIES}`,
+        subcategoryId
+      )
+    );
+    if (!snap.exists()) errors.push("Invalid subcategory selected.");
+  }
+  if (errors.length) throw new Error(errors.join(" "));
+  return true;
+}
+
+export async function batchUpdateLinkedProducts({
+  type,
+  id,
+  newName,
+  categoryId = null,
+}) {
+  const batch = writeBatch(db);
+  let q;
+  switch (type) {
+    case "brand":
+      q = query(collection(db, COLLECTIONS.PRODUCTS), where("brandId", "==", id));
+      break;
+    case "category":
+      q = query(collection(db, COLLECTIONS.PRODUCTS), where("categoryId", "==", id));
+      break;
+    case "subcategory":
+      q = query(
+        collection(db, COLLECTIONS.PRODUCTS),
+        where("subcategoryId", "==", id),
+        where("categoryId", "==", categoryId)
+      );
+      break;
+    default:
+      throw new Error("Invalid relation type for batch update.");
+  }
+
+  const snap = await getDocs(q);
+  snap.forEach((d) => {
+    const updates = {};
+    if (type === "brand") updates.brandName = newName;
+    if (type === "category") updates.categoryName = newName;
+    if (type === "subcategory") updates.subcategoryName = newName;
+    batch.update(d.ref, updates);
+  });
+  await batch.commit();
+  return snap.size;
+}
+
+export async function safeDeleteEntity({
+  type,
+  id,
+  categoryId = null,
+  cascade = false,
+}) {
+  let q;
+  switch (type) {
+    case "brand":
+      q = query(collection(db, COLLECTIONS.PRODUCTS), where("brandId", "==", id));
+      break;
+    case "category":
+      q = query(collection(db, COLLECTIONS.PRODUCTS), where("categoryId", "==", id));
+      break;
+    case "subcategory":
+      q = query(
+        collection(db, COLLECTIONS.PRODUCTS),
+        where("subcategoryId", "==", id),
+        where("categoryId", "==", categoryId)
+      );
+      break;
+    default:
+      throw new Error("Invalid relation type for deletion.");
+  }
+
+  const snap = await getDocs(q);
+
+  if (!cascade && !snap.empty) {
+    throw new Error(
+      `Cannot delete ${type}: ${snap.size} product(s) still reference it.`
+    );
+  }
+
+  if (cascade && !snap.empty) {
+    const batch = writeBatch(db);
+    snap.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  const refPath =
+    type === "subcategory"
+      ? `${COLLECTIONS.CATEGORIES}/${categoryId}/${SUBCOLLECTIONS.SUBCATEGORIES}`
+      : `${type}s`;
+  await deleteDoc(doc(db, refPath, id));
+  return { deletedProducts: cascade ? snap.size : 0 };
+}
